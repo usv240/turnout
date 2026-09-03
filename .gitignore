@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+*.egg-info/
+dist/
+build/
+web/node_modules/
+web/.next/
+web/out/
+cdk.out/
+.DS_Store
+*.log
