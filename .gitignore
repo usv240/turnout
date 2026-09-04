@@ -12,3 +12,4 @@ web/out/
 cdk.out/
 .DS_Store
 *.log
+data/runs/

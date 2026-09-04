@@ -1,0 +1,35 @@
+# Every SMS Turnout sends. Fixed strings with slots. Reviewed as copy, tested for length.
+# Rules: one purpose per message, sender name first, numbered replies, under 160 characters
+# for members, under 300 for chief decision messages.
+
+poll: "{dept}: Around {day} {start}-{end}? Reply Y or N, or a time like \"till 2\"."
+poll_echo_yes: "{dept}: Got it: {day} available. Thanks."
+poll_echo_no: "{dept}: Got it: {day} not available. Thanks."
+poll_echo_partial: "{dept}: Got it: {day} until {until}. Thanks."
+clarify: "{dept}: Did you mean {day} morning only (reply 1) or {day} afternoon only (reply 2)?"
+ask: "{dept}: {day} {start}-{end} needs a {role}. You usually can. Reply Y or N. If Y, you are on the board and the chief is told."
+ask_echo_yes: "{dept}: You are on the board for {day} {start}-{end}. Thank you."
+ask_echo_no: "{dept}: No problem. Thanks for replying."
+swap: "{dept}: Swap idea: you take {day_a} {win_a}, {other} takes your {day_b} {win_b}. Both of you must say Y. Reply Y or N."
+covered: "{dept}: {day} {start}-{end} {district} is covered by {by}. Nothing needed from you. Thanks for replying."
+ack_working: "{dept}: Got it, working on {day} now."
+stop: "{dept}: You are opted out. You will get no more texts. Reply START to rejoin."
+start: "{dept}: Welcome back. You will get one poll a day at most. Reply STOP any time."
+help: "{dept}: I ask about coverage once a day and at most twice a week for specific hours. Reply Y, N, or a time. Reply STOP to opt out, LIMITS to see your settings."
+limits: "{dept}: Your quiet hours {qh_start}-{qh_end}. Asks this week: {asks} of {limit}. Change by telling the chief."
+held_prefix: "Sent after your quiet hours. "
+cert: "{dept}: Your {cert} expires {expires}. Refresher {when} works with your availability. Reply Y to book, N for other dates."
+
+# Chief
+decision: "{dept}: {day} {start}-{end} {district}: {level}.\n{explanation}.\n{recommendation}.\nReply 1 approve, 2 options, 3 leave open."
+decision_multi: "{dept}: {day} needs you, {n} windows: {windows}.\n{worst_explanation}.\n{recommendation}.\nReply 1 approve all, 2 options, 3 leave open."
+decision_no_offer: "{dept}: {day} {start}-{end} {district}: {level}.\n{explanation}.\nNo neighbor can cover. This is the decision only you can make.\nReply 2 options, 3 leave open."
+approved: "{dept}: Done. {by} covers {day} {start}-{end} {district}. Members told. Reply UNDO within 10 min to cancel."
+undone: "{dept}: Cancelled. {day} {start}-{end} {district} is open again."
+left_open: "{dept}: Left open. I will check again at {next_check}."
+options_header: "{dept}: Other options for {day} {start}-{end}:"
+escalation: "{dept} (escalated to {to}): Chief has not replied in {hours} hrs. {day} {start}-{end} {district} {level}. {offer_line} Reply 1 approve, 3 leave open."
+status: "{dept}: Next 7 days: {n_gaps} gaps. {gap_lines}Everything else covered."
+status_clear: "{dept}: Next 7 days: all windows covered."
+weekly: "{dept} week: {hours} hrs, {covered} covered. {closed_members} gaps closed by members, {closed_peers} by neighbors. You decided {decisions} times. Ledger: {ledger}. {certs}"
+recommendation_offer: "{by} can cover, {delay} min delay. {dept} would owe {hours} hrs"

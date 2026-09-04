@@ -1,0 +1,38 @@
+[project]
+name = "turnout"
+version = "0.1.0"
+description = "Turnout: an agent network that keeps volunteer fire and EMS departments covered. Built with Strands Agents and Amazon Bedrock AgentCore."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12"
+dependencies = [
+    "strands-agents[a2a]",
+    "strands-agents-tools",
+    "bedrock-agentcore",
+    "pydantic>=2",
+    "pyyaml",
+    "boto3",
+    "fastapi",
+    "uvicorn[standard]",
+    "httpx",
+    "python-dateutil",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "ruff", "bedrock-agentcore-starter-toolkit"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/turnout"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
