@@ -337,3 +337,16 @@ footer.site .wrap { display: flex; flex-wrap: wrap; gap: var(--s4); align-items:
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
 }
+
+/* Connection banner. The demo runs against a live service, so losing it should be legible
+   rather than a spinner that never stops. */
+.conn {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: var(--s4);
+  z-index: 80; max-width: min(560px, calc(100vw - 32px));
+  padding: var(--s3) var(--s4); border-radius: var(--r-md);
+  font-size: .9375rem; box-shadow: var(--shadow);
+  display: flex; gap: var(--s3); align-items: center;
+  border: 1px solid var(--warning); background: var(--warning-soft); color: var(--text);
+}
+.conn.gone { border-color: var(--danger); background: var(--danger-soft); }
+.conn button { flex: none; }

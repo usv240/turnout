@@ -104,6 +104,33 @@ def get_trace(since: int = Query(default=0),
     return service.trace(since)
 
 
+@app.post("/api/roster/parse", tags=["onboarding"])
+def parse_roster_endpoint(body: dict = Body(...),
+                          x_api_key: str | None = Header(default=None)) -> dict:
+    """Read a pasted roster and report what was understood, before anything is saved.
+
+    Accepts whatever the chief already has: a group text, a spreadsheet paste, a printed list.
+    Lines it could not read come back in `unreadable` rather than being dropped, because a member
+    missing from the roster is a member the agent will never ask.
+
+    Body: {"text": "Dana Ortiz (Chief) 555-298-6397
+Luis Reyes - driver 555 111 2222"}
+    """
+    check_key(x_api_key)
+    from turnout.onboarding import CREW_PRESETS, parse_roster
+
+    text = body.get("text") or ""
+    parsed = parse_roster(text)
+    return {
+        "members": [m.model_dump(mode="json") for m in parsed.members],
+        "unreadable": parsed.unreadable,
+        "duplicates": parsed.duplicates,
+        "crew_presets": [{"id": k, "label": v["label"],
+                          "crew": {r.value: n for r, n in v["crew"].fire.items()}}
+                         for k, v in CREW_PRESETS.items()],
+    }
+
+
 @app.post("/api/step", tags=["demo"])
 def post_step(body: dict = Body(default={})) -> dict:
     """Run the next step of the demo week, or a named one via {"step": "neighbors"}."""

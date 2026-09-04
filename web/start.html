@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turnout: set up a department</title>
+<meta name="description" content="Set up a volunteer fire or EMS department in under three minutes. Paste whatever roster you already have.">
+<script>
+  (function () {
+    try {
+      var m = localStorage.getItem("turnout-theme");
+      if (m && m !== "system") document.documentElement.setAttribute("data-theme", m);
+    } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23B3261E'/></svg>">
+<style>
+  .wizard { max-width: 780px; }
+  .stepbar { display: flex; gap: var(--s2); margin-bottom: var(--s5); flex-wrap: wrap; }
+  .stepbar span {
+    padding: 6px 12px; border-radius: var(--r-pill); font-size: .875rem;
+    border: 1px solid var(--border); color: var(--text-muted); background: var(--surface);
+  }
+  .stepbar span[aria-current="step"] { border-color: var(--accent); color: var(--accent); font-weight: 650; }
+  .stepbar span.done { color: var(--success); border-color: var(--success); }
+  textarea {
+    width: 100%; min-height: 190px; font: inherit; font-size: 1rem; line-height: 1.5;
+    padding: var(--s4); border-radius: var(--r-md); border: 1px solid var(--border);
+    background: var(--surface); color: var(--text); resize: vertical;
+  }
+  .radio-card {
+    display: block; border: 1px solid var(--border); border-radius: var(--r-md);
+    padding: var(--s4); cursor: pointer; background: var(--surface); margin-bottom: var(--s3);
+  }
+  .radio-card:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+  .radio-card input { margin-right: var(--s3); }
+  .review-row {
+    display: flex; flex-wrap: wrap; gap: var(--s3); align-items: center;
+    padding: var(--s3) 0; border-bottom: 1px solid var(--border);
+  }
+  .review-row .nm { font-weight: 600; min-width: 150px; }
+  .review-row .ph { color: var(--text-muted); font-variant-numeric: tabular-nums; min-width: 130px; }
+  .warn { background: var(--warning-soft); border: 1px solid var(--warning); border-radius: var(--r-md); padding: var(--s4); }
+</style>
+</head>
+<body class="app">
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site">
+  <div class="bar">
+    <a class="brand" href="index.html"><span class="mark" aria-hidden="true"></span> Turnout</a>
+    <div class="header-actions">
+      <div class="theme-toggle"></div>
+      <a class="btn small" href="app.html">Open the demo instead</a>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="wrap wizard" style="padding-top:var(--s6);padding-bottom:var(--s8)">
+  <h1 style="font-size:1.75rem">Set up your department</h1>
+  <p class="muted">Three steps, about three minutes. Nothing is sent to anyone until you finish, and
+  no member is texted until the first poll goes out tomorrow morning.</p>
+
+  <div class="stepbar" role="list" aria-label="Setup steps">
+    <span role="listitem" id="s1" aria-current="step">1. Your roster</span>
+    <span role="listitem" id="s2">2. Minimum crew</span>
+    <span role="listitem" id="s3">3. Your neighbours</span>
+  </div>
+
+  <!-- Step 1 -->
+  <section class="card stack" id="step1">
+    <h2 style="font-size:1.25rem">Paste whatever you already have</h2>
+    <p class="muted small" style="margin:0">A group text, a spreadsheet, the list on the station
+    wall. Any format. Names, phone numbers and roles are read out of it, and anything that cannot be
+    read is shown to you rather than dropped.</p>
+    <label for="roster" class="small" style="font-weight:600">Roster</label>
+    <textarea id="roster" spellcheck="false" aria-describedby="roster-help"
+placeholder="Dana Ortiz (Chief) 555-298-6397
+Luis Reyes - driver 555 111 2222
+Marcy Kowalski EMT (555) 333-4444
+Tom Bright ff +1 555 555 6666"></textarea>
+    <p id="roster-help" class="small muted" style="margin:0">Role words like chief, driver, EMT and
+    firefighter are picked up automatically. You can change them on the next screen.</p>
+    <div class="btn-row">
+      <button class="btn primary" id="read" type="button">Read my roster</button>
+      <button class="btn" id="sample" type="button">Use a sample roster</button>
+    </div>
+    <div id="parse-out"></div>
+  </section>
+
+  <!-- Step 2 -->
+  <section class="card stack" id="step2" hidden>
+    <h2 style="font-size:1.25rem">What is the smallest crew that can roll?</h2>
+    <p class="muted small" style="margin:0">A window counts as a gap when the people available
+    cannot make this crew. Pick the closest, and you can change it later.</p>
+    <div id="presets"></div>
+    <div class="btn-row">
+      <button class="btn" id="back2" type="button">Back</button>
+      <button class="btn primary" id="next2" type="button">Next</button>
+    </div>
+  </section>
+
+  <!-- Step 3 -->
+  <section class="card stack" id="step3" hidden>
+    <h2 style="font-size:1.25rem">Who are your mutual aid neighbours?</h2>
+    <p class="muted small" style="margin:0">One department per line. If they run Turnout, their
+    agent will answer yours directly. If they do not, Turnout drafts the text for you to send and
+    you stay in the loop.</p>
+    <textarea id="peers" style="min-height:110px" spellcheck="false"
+placeholder="Riverton Fire and Rescue
+Cedar Hollow Volunteer Fire Department"></textarea>
+    <div class="btn-row">
+      <button class="btn" id="back3" type="button">Back</button>
+      <button class="btn primary" id="finish" type="button">Finish setup</button>
+    </div>
+  </section>
+
+  <!-- Done -->
+  <section class="card stack" id="done" hidden>
+    <h2 style="font-size:1.25rem">That is everything.</h2>
+    <div id="summary"></div>
+    <p style="margin:0">The first roll call goes out tomorrow at 06:30. You will hear from Turnout
+    only when something needs you.</p>
+    <div class="notice">
+      This is the setup flow, and it stops here on purpose. Saving a new department would write to
+      the shared demo, so nothing is written. Open the demo to see a department that is already
+      running.
+    </div>
+    <div class="btn-row">
+      <a class="btn primary" href="app.html">Open the demo</a>
+      <a class="btn" href="index.html">Back to the overview</a>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div><a href="index.html">Back to the overview</a> &middot; MIT licence</div>
+    <div class="theme-toggle"></div>
+  </div>
+</footer>
+
+<script src="infotips.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  "use strict";
+  var parsed = null, crew = "engine";
+
+  var SAMPLE = "Dana Ortiz (Chief) 555-298-6397\n" +
+    "Luis Reyes - driver 555 111 2222\n" +
+    "Marcy Kowalski EMT (555) 333-4444\n" +
+    "Tom Bright ff +1 555 555 6666\n" +
+    "Priya Nair, EMT, 5551234567\n" +
+    "Dave Miller  driver operator  555-765-4321\n" +
+    "this line has no number at all\n";
+
+  function show(id) {
+    ["step1", "step2", "step3", "done"].forEach(function (s) {
+      document.getElementById(s).hidden = s !== id;
+    });
+    var map = { step1: "s1", step2: "s2", step3: "s3" };
+    ["s1", "s2", "s3"].forEach(function (s) {
+      var el = document.getElementById(s);
+      el.removeAttribute("aria-current");
+      el.classList.remove("done");
+    });
+    if (map[id]) document.getElementById(map[id]).setAttribute("aria-current", "step");
+    if (id === "step2" || id === "step3" || id === "done") document.getElementById("s1").classList.add("done");
+    if (id === "step3" || id === "done") document.getElementById("s2").classList.add("done");
+    if (id === "done") document.getElementById("s3").classList.add("done");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  document.getElementById("sample").addEventListener("click", function () {
+    document.getElementById("roster").value = SAMPLE;
+    read();
+  });
+
+  function read() {
+    var text = document.getElementById("roster").value;
+    var out = document.getElementById("parse-out");
+    out.innerHTML = "";
+    if (!text.trim()) {
+      out.appendChild(window.h("p", { class: "small muted",
+        text: "Paste something first, or press Use a sample roster." }));
+      return;
+    }
+    out.appendChild(window.h("p", { class: "small muted", text: "Reading..." }));
+    fetch("/api/roster/parse", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ text: text })
+    }).then(function (r) {
+      if (!r.ok) throw new Error("the server returned " + r.status);
+      return r.json();
+    }).then(function (d) {
+      parsed = d;
+      out.innerHTML = "";
+      if (!d.members.length) {
+        out.appendChild(window.h("div", { class: "warn" }, [
+          window.h("strong", { text: "No phone numbers found. " }),
+          "Every member needs a number, because a text is how Turnout reaches them."
+        ]));
+        return;
+      }
+      out.appendChild(window.h("h3", { style: "font-size:1.0625rem;margin-top:var(--s4)",
+        text: d.members.length + " members found" }));
+      d.members.forEach(function (m) {
+        out.appendChild(window.h("div", { class: "review-row" }, [
+          window.h("span", { class: "nm", text: m.name }),
+          window.h("span", { class: "ph", text: m.phone }),
+          window.h("span", {}, m.roles.map(function (r) {
+            return window.h("span", { class: "badge neutral",
+              text: r.replace("_", " "), style: "margin-right:4px" });
+          }))
+        ]));
+      });
+      if (d.duplicates.length) {
+        out.appendChild(window.h("div", { class: "warn", style: "margin-top:var(--s4)" }, [
+          window.h("strong", { text: "Repeated numbers, kept once: " }), d.duplicates.join("; ")
+        ]));
+      }
+      if (d.unreadable.length) {
+        out.appendChild(window.h("div", { class: "warn", style: "margin-top:var(--s4)" }, [
+          window.h("strong", { text: d.unreadable.length
+            + (d.unreadable.length === 1 ? " line had" : " lines had") + " no phone number. " }),
+          "They are not dropped in silence, because a member missing from the roster is a member "
+          + "Turnout will never ask: ",
+          window.h("em", { text: d.unreadable.slice(0, 4).join(" | ") })
+        ]));
+      }
+      var row = window.h("div", { class: "btn-row", style: "margin-top:var(--s4)" }, [
+        window.h("button", { class: "btn primary", type: "button",
+          onclick: function () { renderPresets(); show("step2"); } }, ["Looks right, next"])
+      ]);
+      out.appendChild(row);
+    }).catch(function (e) {
+      out.innerHTML = "";
+      out.appendChild(window.h("div", { class: "warn" }, [
+        window.h("strong", { text: "Could not read the roster. " }),
+        e.message + ". Your paste is still in the box, so nothing is lost. Try again."
+      ]));
+    });
+  }
+
+  document.getElementById("read").addEventListener("click", read);
+
+  function renderPresets() {
+    var host = document.getElementById("presets");
+    host.innerHTML = "";
+    (parsed.crew_presets || []).forEach(function (p, i) {
+      var label = window.h("label", { class: "radio-card" });
+      var input = window.h("input", { type: "radio", name: "crew", value: p.id });
+      if (i === 0) { input.checked = true; crew = p.id; }
+      input.addEventListener("change", function () { crew = p.id; });
+      label.appendChild(input);
+      label.appendChild(window.h("span", { text: p.label }));
+      host.appendChild(label);
+    });
+  }
+
+  document.getElementById("back2").addEventListener("click", function () { show("step1"); });
+  document.getElementById("next2").addEventListener("click", function () { show("step3"); });
+  document.getElementById("back3").addEventListener("click", function () { show("step2"); });
+
+  document.getElementById("finish").addEventListener("click", function () {
+    var peers = document.getElementById("peers").value.split("\n")
+      .map(function (s) { return s.trim(); }).filter(Boolean);
+    var preset = (parsed.crew_presets || []).filter(function (p) { return p.id === crew; })[0];
+    var host = document.getElementById("summary");
+    host.innerHTML = "";
+    host.appendChild(window.h("dl", { class: "kv" }, [
+      window.h("dt", { text: "Members" }),
+      window.h("dd", { text: String(parsed.members.length) }),
+      window.h("dt", { text: "Minimum crew" }),
+      window.h("dd", { text: preset ? preset.label : crew }),
+      window.h("dt", { text: "Neighbours" }),
+      window.h("dd", { text: peers.length ? peers.join(", ") : "none yet" })
+    ]));
+    show("done");
+  });
+})();
+</script>
+</body>
+</html>

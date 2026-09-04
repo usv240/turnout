@@ -418,6 +418,42 @@
     if (active === "tab-incident") renderIncident();
   }
 
+
+  /* Connection state -----------------------------------------------------
+     Three things a person needs when something breaks: what happened, what the system did about
+     it, and the one action available. */
+  var connEl = null;
+  function connection(message, kind, actionLabel, action) {
+    if (connEl) { connEl.remove(); connEl = null; }
+    if (!message) return;
+    connEl = window.h("div", { class: "conn" + (kind === "gone" ? " gone" : ""),
+      role: "status", "aria-live": "polite" }, [window.h("span", { text: message })]);
+    if (actionLabel) {
+      connEl.appendChild(window.h("button", { class: "btn small", type: "button",
+        onclick: function () { connection(null); action(); } }, [actionLabel]));
+    }
+    document.body.appendChild(connEl);
+  }
+  window.addEventListener("offline", function () {
+    connection("You are offline. Nothing is lost; the demo picks up where it left off.", "gone");
+  });
+  window.addEventListener("online", function () {
+    connection("Back online.", "");
+    setTimeout(function () { connection(null); }, 2500);
+  });
+
+  function fail(e) {
+    setBusy(false);
+    var offline = !navigator.onLine;
+    var el = document.getElementById("status");
+    el.className = "status-line needs_you";
+    el.textContent = offline
+      ? "You are offline, so that step did not run. Nothing was lost."
+      : "That step did not finish: " + e.message + ". Nothing was saved.";
+    connection(offline ? "You are offline." : "The service did not answer.",
+      "gone", "Try again", function () { location.reload(); });
+  }
+
   /* Actions -------------------------------------------------------------- */
 
   function pullTrace() {
@@ -440,12 +476,7 @@
     }).then(function () {
       setBusy(false);
       renderAll();
-    }).catch(function (e) {
-      setBusy(false);
-      var el = document.getElementById("status");
-      el.className = "status-line needs_you";
-      el.textContent = "Something went wrong: " + e.message + ". Press Reset to start again.";
-    });
+    }).catch(fail);
   }
 
   function sendReply(phone, body) {
@@ -504,10 +535,6 @@
       renderAll();
       var hash = (location.hash || "").replace("#", "");
       if (hash && document.getElementById("tab-" + hash)) selectTab("tab-" + hash);
-    }).catch(function (e) {
-      var el = document.getElementById("status");
-      el.className = "status-line needs_you";
-      el.textContent = "Could not reach the API: " + e.message;
-    });
+    }).catch(fail);
   });
 })();
