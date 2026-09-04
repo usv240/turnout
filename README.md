@@ -6,8 +6,10 @@ A background agent for volunteer fire and EMS departments. It finds the hours wh
 respond, fills them by asking the right people and the right neighbours, and interrupts the chief
 only for the one decision that needs a human.
 
-Built with the [Strands Agents SDK](https://strandsagents.com/) and deployed on
-[Amazon Bedrock AgentCore](https://docs.aws.amazon.com/bedrock-agentcore/).
+Built with the [Strands Agents SDK](https://strandsagents.com/) on
+[Amazon Bedrock](https://docs.aws.amazon.com/bedrock/), deployed on AWS App Runner.
+Designed for [Amazon Bedrock AgentCore](https://docs.aws.amazon.com/bedrock-agentcore/), which is
+not wired in yet: see Honest notes.
 Submitted to the AWS Agents for Humans Hackathon, **Good Neighbor Agents** track.
 
 ---
@@ -70,7 +72,10 @@ department publishes an AgentCard and answers coverage questions about itself, a
 
 ### AgentCore services, and why
 
-| Service | Use here |
+**These are designed in, not wired in.** The deployed code calls Bedrock directly. Each row is the
+reason that service is the right primitive here, which is why the design is shaped this way.
+
+| Service | Why it is the right primitive here |
 |---|---|
 | Runtime | One isolated runtime per department, with sessions that stay open while the agent waits up to 90 minutes for members to reply. |
 | Memory | Which members say yes to which windows, and how this chief likes decisions phrased. |

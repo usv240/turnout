@@ -56,7 +56,7 @@
     <p class="credibility">
       <span>4.5 million Americans live more than 25 minutes from an ambulance<button class="info" data-tip="ambulance_desert" data-label="ambulance deserts"></button></span>
       <span>Built on peer-reviewed volunteer response research<button class="info" data-tip="p_understaffed" data-label="the response model"></button></span>
-      <span>Runs on Amazon Bedrock AgentCore<button class="info" data-tip="agentcore_runtime" data-label="AgentCore Runtime"></button></span>
+      <span>Seven agents on Amazon Bedrock, deployed on AWS<button class="info" data-tip="where_it_runs" data-label="where it runs"></button></span>
     </p>
   </div>
 </section>
@@ -250,10 +250,20 @@
       because a safety workflow has to be deterministic and auditable.
     </p>
 
+    <div class="notice">
+      <strong>What is running right now, and what is not.</strong>
+      The Strands agents, the Graph, the hooks and the Agent-to-Agent protocol are all live on this
+      deployment: the two peer departments answer over real HTTP. It runs on AWS App Runner and calls
+      Amazon Bedrock directly. The six AgentCore services below are the deployment this is designed
+      for, with a real reason each, and they are not wired in yet.
+      <button class="info" data-tip="where_it_runs" data-label="where it runs"></button>
+    </div>
+
     <div class="card">
       <img src="architecture.svg" alt="Architecture diagram. Inside Millbrook, a Strands Graph runs Watch, then Closer, then Neighbor, then Chief Gate, with Scribe and Cert Clock as separate jobs. Neighbor talks over the Agent-to-Agent protocol to Riverton and Cedar Hollow, which run the same agent code in their own AgentCore runtimes. All agents use AgentCore Memory, Gateway, Identity, Code Interpreter and Observability, and reach members and the chief by text message." style="width:100%;height:auto">
     </div>
 
+    <h3 style="margin-top:var(--s5)">Designed for Amazon Bedrock AgentCore</h3>
     <div class="grid cols-4">
       <div class="card"><h3>Runtime<button class="info" data-tip="agentcore_runtime" data-label="AgentCore Runtime"></button></h3><p class="muted small">One isolated runtime per department, with sessions that stay open while the agent waits for replies.</p></div>
       <div class="card"><h3>Memory<button class="info" data-tip="agentcore_memory" data-label="AgentCore Memory"></button></h3><p class="muted small">Who says yes to which windows, and how this chief likes decisions phrased.</p></div>
@@ -280,7 +290,8 @@
             <td><strong>Technical implementation</strong></td>
             <td>A Strands Graph with conditional edges inside each department, agents as tools, hooks
             enforcing contact policy, and real Agent-to-Agent between three separate servers. Six
-            AgentCore services, each for a stated reason.</td>
+            AgentCore services designed in, each for a stated reason, and named honestly as not
+            yet wired in.</td>
             <td><a href="app.html#trace">Agent trace</a><br><a href="#developers">API and code</a></td>
           </tr>
           <tr>

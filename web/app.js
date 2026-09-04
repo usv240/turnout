@@ -64,6 +64,23 @@
       if (s.done) b.disabled = true;
       host.appendChild(b);
     });
+
+    var doneCount = state.steps.filter(function (s) { return s.done; }).length;
+    var shared = document.getElementById("shared-note");
+    if (shared) {
+      if (doneCount > 0 && doneCount < state.steps.length) {
+        shared.hidden = false;
+        shared.innerHTML = "";
+        shared.appendChild(window.h("span", { text:
+          "Someone has already played " + doneCount + " of these steps. This demo is one shared "
+          + "scenario, so everyone sees the same week. " }));
+        shared.appendChild(window.h("button", { class: "btn small", type: "button",
+          onclick: reset }, ["Start it again from the beginning"]));
+      } else {
+        shared.hidden = true;
+      }
+    }
+
     var detail = nextUndone ? nextUndone.detail : "The week is played out. Press Reset to run it again.";
     document.getElementById("step-detail").textContent = detail;
   }

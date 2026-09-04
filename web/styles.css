@@ -13,7 +13,9 @@
   --accent-soft: #FBEAE8;
   --success: #1F7A4D;
   --success-soft: #E6F4EC;
-  --warning: #9A6700;
+  --warning: #855800;  /* 5.5:1 on warning-soft. The old #9A6700 was 4.34, which
+                          passes only as large text, and axe counts weight 650 as
+                          not bold, so it failed a real audit. */
   --warning-soft: #FBF1DC;
   --danger: #B42318;
   --danger-soft: #FBE9E7;
