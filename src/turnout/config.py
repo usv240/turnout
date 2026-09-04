@@ -39,6 +39,12 @@ class Settings:
     # Messaging
     sms_origination_id: str = field(default_factory=lambda: _env("TURNOUT_SMS_ORIGINATION", ""))
 
+    # AgentCore. Off by default so the tests and a clone with no AWS access stay fast and offline;
+    # on in the deployment, where the risk kernel runs in Code Interpreter and response history
+    # lives in Memory. Every result records which one actually answered.
+    use_agentcore: bool = field(
+        default_factory=lambda: _env("TURNOUT_USE_AGENTCORE", "").lower() in ("1", "true", "yes"))
+
     # Policy defaults (can be overridden per department)
     default_quiet_hours: tuple[int, int] = (22, 6)
     default_weekly_ask_limit: int = 2

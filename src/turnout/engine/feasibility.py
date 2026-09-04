@@ -1,49 +1,24 @@
 """Qualified crew feasibility: can the available members fill the minimum crew, one role each?
 
-This is a small bipartite matching between members and role slots. Exact, not heuristic.
+The matching itself lives in `kernel.py`, which is dependency free so that the identical source can
+run inside AgentCore Code Interpreter. This module is the typed front door to it.
 """
 
 from __future__ import annotations
 
+from turnout.engine import kernel
 from turnout.models import Role
 
 
-def _slots(min_crew: dict[Role, int]) -> list[Role]:
-    out: list[Role] = []
-    for role, n in min_crew.items():
-        out.extend([role] * n)
-    return out
-
-
 def max_matching(member_roles: list[set[Role]], slots: list[Role]) -> tuple[int, list[int | None]]:
-    """Kuhn's algorithm. Returns (matched_count, slot_assignment) where slot_assignment[i] is the member index."""
-    slot_to_member: list[int | None] = [None] * len(slots)
-
-    def try_assign(m: int, seen: list[bool]) -> bool:
-        for s, role in enumerate(slots):
-            if role in member_roles[m] and not seen[s]:
-                seen[s] = True
-                if slot_to_member[s] is None or try_assign(slot_to_member[s], seen):
-                    slot_to_member[s] = m
-                    return True
-        return False
-
-    matched = 0
-    for m in range(len(member_roles)):
-        if try_assign(m, [False] * len(slots)):
-            matched += 1
-    return matched, slot_to_member
+    return kernel.max_matching([{str(r) for r in s} for s in member_roles], [str(s) for s in slots])
 
 
 def missing_roles(member_roles: list[set[Role]], min_crew: dict[Role, int]) -> list[Role]:
     """Roles that cannot be filled. Empty list means the crew requirement is feasible."""
-    slots = _slots(min_crew)
-    if not slots:
-        return []
-    matched, assignment = max_matching(member_roles, slots)
-    if matched == len(slots):
-        return []
-    return [slots[i] for i, m in enumerate(assignment) if m is None]
+    out = kernel.missing_roles([{str(r) for r in s} for s in member_roles],
+                               {str(k): v for k, v in min_crew.items()})
+    return [Role(r) for r in out]
 
 
 def is_feasible(member_roles: list[set[Role]], min_crew: dict[Role, int]) -> bool:

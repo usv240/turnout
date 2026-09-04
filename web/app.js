@@ -102,6 +102,13 @@
     row("Available members", String(i.available_member_ids.length), null);
     row("History used", i.history_days + " days", "history_days");
     row("Risk score", g.risk_score.toFixed(2) + " of 1.00", "risk_score");
+    var WHERE = {
+      agentcore_code_interpreter: "Amazon Bedrock AgentCore Code Interpreter",
+      local: "locally, in this process",
+      local_cached: "locally, reusing a probability already computed for these same people",
+      local_fallback: "locally, because AgentCore did not answer"
+    };
+    row("Computed in", WHERE[i.ran_in] || i.ran_in, "where_it_runs");
 
     var wrap = window.h("div", {}, [dl]);
     wrap.appendChild(window.h("pre", { class: "formula" },

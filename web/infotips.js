@@ -2,7 +2,7 @@
    Rule: at most three short sentences. What it is, why it exists, and where to read more. */
 
 window.INFOTIPS = {
-  where_it_runs: "Both projects run on AWS App Runner and call Amazon Bedrock directly. The Strands agents, the Graph, the hooks and the Agent-to-Agent protocol are all live. The AgentCore services are the deployment this is designed for, each for a stated reason, and are not wired in yet.",
+  where_it_runs: "The risk kernel runs inside Amazon Bedrock AgentCore Code Interpreter, and member response history lives in AgentCore Memory. It is the same kernel.py file either way, so the two cannot drift. If AgentCore does not answer, the identical code runs locally and the card says so rather than pretending.",
   /* Domain terms ------------------------------------------------------- */
   second_due: "In the fire service, the second due is the company that arrives after the first, usually from a neighbouring department. It is the backup that shows up when the first crew cannot. The product is named for it.",
   mutual_aid: "A standing agreement between neighbouring departments to respond into each other's areas when needed. It is how most of rural America gets covered. Today it is arranged by one chief phoning another.",

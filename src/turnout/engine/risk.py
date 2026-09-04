@@ -25,6 +25,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from itertools import product
 
+from turnout.engine import kernel
 from turnout.engine.feasibility import is_feasible, missing_roles
 from turnout.models import Call, Level, Role, WeatherAlert
 
@@ -201,6 +202,9 @@ class RiskResult:
     level: Level
     explanation: str
     history_days: int
+    ran_in: str = "local"
+    """Where the matching and probability actually executed: agentcore_code_interpreter, local, or
+    local_fallback when AgentCore was unreachable. On the screen rather than assumed."""
 
 
 def level_for(score: float, critical: float = 0.75, high: float = 0.50, elevated: float = 0.25) -> Level:
@@ -221,6 +225,8 @@ def score_window(
     rate: RateModel,
     alerts: list[WeatherAlert],
     thresholds: tuple[float, float, float] = (0.75, 0.50, 0.25),
+    use_agentcore: bool = False,
+    p_understaffed_override: float | None = None,
 ) -> RiskResult:
     lam = rate.expected_calls(start, end)
     active = [a for a in alerts if a.start < end and a.end > start]
@@ -230,10 +236,37 @@ def score_window(
         hazard *= a.multiplier
         names.append(a.event)
     sev = rate.severity(start, end)
-    pu = p_understaffed(available, min_crew)
-    missing = missing_roles([r for r, _ in available], min_crew)
-    score = 1 - math.exp(-SCALE * (lam * hazard) * pu * sev)
-    lvl = level_for(score, *thresholds)
+
+    # The matching and the probability run through kernel.score, which is the file that also runs
+    # inside AgentCore Code Interpreter. Passing use_agentcore lets a caller choose, and the result
+    # says where it actually ran.
+    payload = {
+        "members": [[sorted(str(x) for x in roles), p] for roles, p in available],
+        "min_crew": {str(k): v for k, v in min_crew.items()},
+        "expected_calls": lam, "hazard": hazard, "severity": sev,
+        "thresholds": list(thresholds),
+    }
+    if p_understaffed_override is not None:
+        # Callers that already know this probability, because they cached it across windows with the
+        # same people available, pass it in. Cheaper than recomputing, and honest about what ran.
+        missing = kernel.missing_roles([{str(x) for x in roles} for roles, _ in available],
+                                       {str(k): v for k, v in min_crew.items()})
+        s_val = kernel.risk_score(lam, hazard, p_understaffed_override, sev)
+        out = {"p_understaffed": p_understaffed_override, "missing_roles": missing,
+               "risk_score": s_val, "level": kernel.level_for(s_val, *thresholds),
+               "ran_in": "local_cached"}
+    elif use_agentcore:
+        from turnout.agentcore.code import score as run_kernel
+
+        out = run_kernel(payload, use_agentcore=True)
+    else:
+        out = kernel.score(payload)
+        out["ran_in"] = "local"
+    pu = out["p_understaffed"]
+    missing = [Role(r) for r in out["missing_roles"]]
+    score = out["risk_score"]
+    lvl = Level(out["level"])
+    ran_in = out["ran_in"]
 
     exp_calls = lam * hazard
     if exp_calls < 0.05:
@@ -261,4 +294,4 @@ def score_window(
         parts.append("estimate leans on national pattern")
     explanation = ", ".join(parts)
     return RiskResult(round(lam, 3), round(pu, 3), round(hazard, 3), names, round(sev, 3), missing,
-                      round(score, 3), lvl, explanation, rate.history_days)
+                      round(score, 3), lvl, explanation, rate.history_days, ran_in)

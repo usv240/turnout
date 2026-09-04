@@ -56,7 +56,7 @@
     <p class="credibility">
       <span>4.5 million Americans live more than 25 minutes from an ambulance<button class="info" data-tip="ambulance_desert" data-label="ambulance deserts"></button></span>
       <span>Built on peer-reviewed volunteer response research<button class="info" data-tip="p_understaffed" data-label="the response model"></button></span>
-      <span>Seven agents on Amazon Bedrock, deployed on AWS<button class="info" data-tip="where_it_runs" data-label="where it runs"></button></span>
+      <span>Risk scored inside AgentCore Code Interpreter<button class="info" data-tip="where_it_runs" data-label="where it runs"></button></span>
     </p>
   </div>
 </section>
@@ -252,10 +252,11 @@
 
     <div class="notice">
       <strong>What is running right now, and what is not.</strong>
-      The Strands agents, the Graph, the hooks and the Agent-to-Agent protocol are all live on this
-      deployment: the two peer departments answer over real HTTP. It runs on AWS App Runner and calls
-      Amazon Bedrock directly. The six AgentCore services below are the deployment this is designed
-      for, with a real reason each, and they are not wired in yet.
+      Live on this deployment: the Strands agents, the Graph, the hooks, the Agent-to-Agent protocol
+      between three separate servers, <strong>AgentCore Code Interpreter</strong> running every risk
+      score, and <strong>AgentCore Memory</strong> holding each department's response history. Open
+      any gap and press "Show the numbers behind this": the card names where it was computed.
+      Gateway, Identity and Browser are designed in and not wired in. The web tier is App Runner.
       <button class="info" data-tip="where_it_runs" data-label="where it runs"></button>
     </div>
 
@@ -263,14 +264,14 @@
       <img src="architecture.svg" alt="Architecture diagram. Inside Millbrook, a Strands Graph runs Watch, then Closer, then Neighbor, then Chief Gate, with Scribe and Cert Clock as separate jobs. Neighbor talks over the Agent-to-Agent protocol to Riverton and Cedar Hollow, which run the same agent code in their own AgentCore runtimes. All agents use AgentCore Memory, Gateway, Identity, Code Interpreter and Observability, and reach members and the chief by text message." style="width:100%;height:auto">
     </div>
 
-    <h3 style="margin-top:var(--s5)">Designed for Amazon Bedrock AgentCore</h3>
+    <h3 style="margin-top:var(--s5)">Amazon Bedrock AgentCore</h3>
     <div class="grid cols-4">
-      <div class="card"><h3>Runtime<button class="info" data-tip="agentcore_runtime" data-label="AgentCore Runtime"></button></h3><p class="muted small">One isolated runtime per department, with sessions that stay open while the agent waits for replies.</p></div>
-      <div class="card"><h3>Memory<button class="info" data-tip="agentcore_memory" data-label="AgentCore Memory"></button></h3><p class="muted small">Who says yes to which windows, and how this chief likes decisions phrased.</p></div>
-      <div class="card"><h3>Gateway<button class="info" data-tip="agentcore_gateway" data-label="AgentCore Gateway"></button></h3><p class="muted small">Roster, texting, weather and NERIS as tools, with credentials out of agent code.</p></div>
-      <div class="card"><h3>Identity<button class="info" data-tip="agentcore_identity" data-label="AgentCore Identity"></button></h3><p class="muted small">Scoped credentials to act for a department, and to prove who you are to a neighbour.</p></div>
-      <div class="card"><h3>Code Interpreter<button class="info" data-tip="agentcore_code" data-label="Code Interpreter"></button></h3><p class="muted small">The risk engine and crew matching run as real Python, with inputs and outputs recorded.</p></div>
-      <div class="card"><h3>Observability<button class="info" data-tip="agentcore_observability" data-label="AgentCore Observability"></button></h3><p class="muted small">Every step is a trace, which is what the Trace tab in the demo reads.</p></div>
+      <div class="card"><h3>Code Interpreter, live<button class="info" data-tip="agentcore_code" data-label="Code Interpreter"></button></h3><p class="muted small">Every risk score on this deployment is computed there, by the same kernel.py the local path imports, so the two cannot drift.</p></div>
+      <div class="card"><h3>Memory, live<button class="info" data-tip="agentcore_memory" data-label="AgentCore Memory"></button></h3><p class="muted small">One memory per department, holding who says yes to which windows. Provisioned ahead of time, because creating one takes minutes.</p></div>
+      <div class="card"><h3>Gateway, designed<button class="info" data-tip="agentcore_gateway" data-label="AgentCore Gateway"></button></h3><p class="muted small">Roster, texting, weather and NERIS as tools, with credentials out of agent code.</p></div>
+      <div class="card"><h3>Identity, designed<button class="info" data-tip="agentcore_identity" data-label="AgentCore Identity"></button></h3><p class="muted small">Scoped credentials to act for a department, and to prove who you are to a neighbour.</p></div>
+      <div class="card"><h3>Runtime, designed<button class="info" data-tip="agentcore_runtime" data-label="AgentCore Runtime"></button></h3><p class="muted small">One isolated runtime per department. The web tier runs on App Runner today.</p></div>
+      <div class="card"><h3>Observability, designed<button class="info" data-tip="agentcore_observability" data-label="AgentCore Observability"></button></h3><p class="muted small">The Trace tab reads the agents' own event stream today.</p></div>
       <div class="card"><h3>Hooks<button class="info" data-tip="hooks" data-label="Strands hooks"></button></h3><p class="muted small">Quiet hours and the weekly ask limit are enforced in code, not by a prompt.</p></div>
       <div class="card"><h3>A2A<button class="info" data-tip="a2a" data-label="the A2A protocol"></button></h3><p class="muted small">The open standard that lets one department's agent ask another's for help.</p></div>
     </div>

@@ -127,6 +127,10 @@ class RiskInputs(BaseModel):
     missing_roles: list[Role]
     available_member_ids: list[str]
     history_days: int
+    ran_in: str = "local"
+    """Where the matching and probability executed: agentcore_code_interpreter, local, local_cached,
+    or local_fallback when AgentCore was unreachable. Shown on the gap card, because a claim about
+    where code ran is only worth making if it can be checked."""
 
 
 GapStatus = Literal["open", "asking_members", "members_declined", "asking_neighbors", "needs_chief",

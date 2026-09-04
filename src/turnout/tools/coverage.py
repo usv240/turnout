@@ -58,25 +58,29 @@ def _dominant_district(d, calls, start: datetime, end: datetime) -> str:
 class _CachedRisk:
     """score_window with p_understaffed memoized by availability signature (huge speedup for 20+ members)."""
 
-    def __init__(self, min_crew, rate, alerts, thresholds):
+    def __init__(self, min_crew, rate, alerts, thresholds, use_agentcore: bool = False):
         self.min_crew, self.rate, self.alerts, self.thresholds = min_crew, rate, alerts, thresholds
+        self.use_agentcore = use_agentcore
         self.cache: dict[tuple, float] = {}
 
     def score(self, start, end, avail):
+        """Compute once per distinct set of available people, then reuse.
+
+        Order matters. An earlier version computed the probability locally and passed it in, which
+        meant the AgentCore path was never taken at all: every window came back local_cached. The
+        first window for a given set of people now goes through the real path, AgentCore included,
+        and only the repeats reuse it.
+        """
         sig = tuple(sorted((m.id, round(p, 3)) for m, p in avail))
         members = [(set(m.roles), p) for m, p in avail]
         if sig not in self.cache:
-            self.cache[sig] = p_understaffed(members, self.min_crew, monte_carlo_draws=3000)
-        pu = self.cache[sig]
-        # score_window recomputes p_understaffed; pass through a shim that returns the cached value
-        import turnout.engine.risk as risk_mod
-
-        original = risk_mod.p_understaffed
-        risk_mod.p_understaffed = lambda *a, **k: pu
-        try:
-            return score_window(start, end, members, self.min_crew, self.rate, self.alerts, self.thresholds)
-        finally:
-            risk_mod.p_understaffed = original
+            first = score_window(start, end, members, self.min_crew, self.rate, self.alerts,
+                                 self.thresholds, use_agentcore=self.use_agentcore)
+            self.cache[sig] = first.p_understaffed
+            return first
+        return score_window(start, end, members, self.min_crew, self.rate, self.alerts,
+                            self.thresholds, use_agentcore=self.use_agentcore,
+                            p_understaffed_override=self.cache[sig])
 
 
 def compute_gaps(days: int = 7, apparatus: str = "fire") -> list[Gap]:
@@ -90,7 +94,9 @@ def compute_gaps(days: int = 7, apparatus: str = "fire") -> list[Gap]:
     rate = RateModel.from_history(calls, now())
     alerts = r.weather.active_alerts(d.weather_zone, t0, horizon)
     min_crew = d.min_crew.fire if apparatus == "fire" else d.min_crew.ems
-    scorer = _CachedRisk(min_crew, rate, alerts, (r.settings.risk_critical, r.settings.risk_high, r.settings.risk_elevated))
+    scorer = _CachedRisk(min_crew, rate, alerts,
+                         (r.settings.risk_critical, r.settings.risk_high, r.settings.risk_elevated),
+                         use_agentcore=r.settings.use_agentcore)
 
     # hourly availability and paper feasibility
     hours: list[datetime] = []
@@ -139,7 +145,7 @@ def compute_gaps(days: int = 7, apparatus: str = "fire") -> list[Gap]:
             inputs=RiskInputs(expected_calls=res.expected_calls, p_understaffed=res.p_understaffed,
                               hazard=res.hazard, hazard_names=res.hazard_names, severity=res.severity,
                               missing_roles=res.missing_roles, available_member_ids=[m.id for m, _ in av],
-                              history_days=res.history_days),
+                              history_days=res.history_days, ran_in=res.ran_in),
             risk_score=res.risk_score, level=res.level, explanation=res.explanation,
             status="thin" if feasible else "open",
         )

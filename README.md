@@ -8,8 +8,8 @@ only for the one decision that needs a human.
 
 Built with the [Strands Agents SDK](https://strandsagents.com/) on
 [Amazon Bedrock](https://docs.aws.amazon.com/bedrock/), deployed on AWS App Runner.
-Designed for [Amazon Bedrock AgentCore](https://docs.aws.amazon.com/bedrock-agentcore/), which is
-not wired in yet: see Honest notes.
+Every risk score is computed inside [Amazon Bedrock AgentCore](https://docs.aws.amazon.com/bedrock-agentcore/)
+Code Interpreter, and response history lives in AgentCore Memory.
 Submitted to the AWS Agents for Humans Hackathon, **Good Neighbor Agents** track.
 
 ---
@@ -72,17 +72,19 @@ department publishes an AgentCard and answers coverage questions about itself, a
 
 ### AgentCore services, and why
 
-**These are designed in, not wired in.** The deployed code calls Bedrock directly. Each row is the
-reason that service is the right primitive here, which is why the design is shaped this way.
+**Code Interpreter and Memory are live on the deployment. The rest are designed in.** Any gap card
+names where its numbers were computed, so this is checkable rather than a claim.
 
-| Service | Why it is the right primitive here |
+| Service | Status | Use here |
 |---|---|
-| Runtime | One isolated runtime per department, with sessions that stay open while the agent waits up to 90 minutes for members to reply. |
-| Memory | Which members say yes to which windows, and how this chief likes decisions phrased. |
-| Gateway | Roster, SMS, weather and NERIS as tools, with credentials out of agent code. |
-| Identity | Scoped credentials to act for a department, and to prove identity to a peer department. |
-| Code Interpreter | The risk engine and crew matching run as real Python with inputs and outputs recorded. |
-| Observability | Every step is a trace, which is what the Trace tab reads. |
+| Code Interpreter | **live** | Every risk score runs there, using `engine/kernel.py`, the same dependency free file the local path imports. Identical results, and the card says which ran. |
+| Memory | **live** | One memory per department holding response history. `python -m turnout.agentcore.provision` creates them, because provisioning takes minutes and a chief should not wait. |
+| Runtime | designed | One isolated runtime per department. The web tier is App Runner today. |
+
+| Gateway | designed | Roster, SMS, weather and NERIS as tools, with credentials out of agent code. |
+| Identity | designed | Scoped credentials to act for a department, and to prove identity to a peer. |
+
+| Observability | designed | The Trace tab reads the agents' own event stream today. |
 
 ## Run it
 
