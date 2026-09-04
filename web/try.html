@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turnout: score your own window</title>
+<meta name="description" content="Point the risk engine at your own department. Say who is actually available on a given afternoon and see whether that window is dangerous, with every number behind the answer.">
+<script>
+  (function () {
+    try {
+      var m = localStorage.getItem("turnout-theme");
+      if (m && m !== "system") document.documentElement.setAttribute("data-theme", m);
+    } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23B3261E'/></svg>">
+<style>
+  .grid-form { display: grid; gap: var(--s4); }
+  @media (min-width: 700px) { .grid-form { grid-template-columns: 1fr 1fr; } }
+  .field label { display: block; font-size: .875rem; font-weight: 600; margin-bottom: 6px; }
+  .field input, .field select {
+    font: inherit; width: 100%; min-height: 48px; padding: 10px var(--s3);
+    border-radius: var(--r-sm); border: 1px solid var(--border);
+    background: var(--surface); color: var(--text);
+  }
+  .field .hint { font-size: .8125rem; color: var(--text-muted); margin-top: 6px; display: block; }
+  .person {
+    display: flex; flex-wrap: wrap; gap: var(--s3); align-items: center;
+    padding: var(--s3); border: 1px solid var(--border); border-radius: var(--r-md);
+    background: var(--surface); margin-bottom: var(--s3);
+  }
+  .person .roles { display: flex; flex-wrap: wrap; gap: var(--s2); }
+  .person label.chip-check {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
+    border: 1px solid var(--border); border-radius: var(--r-pill); cursor: pointer;
+    font-size: .875rem; min-height: 40px;
+  }
+  .person label.chip-check:has(input:checked) {
+    border-color: var(--accent); background: var(--accent-soft); font-weight: 600;
+  }
+  .person input[type=number] { width: 92px; min-height: 40px; }
+  .verdict { border-left: 5px solid var(--border); }
+  .verdict.critical { border-left-color: var(--danger); }
+  .verdict.high { border-left-color: var(--warning); }
+  .verdict.elevated { border-left-color: var(--info); }
+  .verdict.low { border-left-color: var(--success); }
+  .score { font-size: 2.5rem; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body class="app">
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site">
+  <div class="bar">
+    <a class="brand" href="index.html"><span class="mark" aria-hidden="true"></span> Turnout</a>
+    <div class="header-actions">
+      <div class="theme-toggle"></div>
+      <a class="btn small" href="app.html">Open the demo</a>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="wrap" style="max-width:860px;padding-top:var(--s6);padding-bottom:var(--s8)">
+  <h1 style="font-size:1.75rem">Score your own window</h1>
+  <p class="muted">The demo answers one question about one fictional department. This is the same
+  risk engine, pointed at whatever you actually have. Say who could turn out on a given afternoon and
+  it will tell you whether that window is dangerous, and show you every number behind the answer.</p>
+
+  <div class="notice" style="margin-bottom:var(--s5)">
+    Nothing is stored, and nobody is texted. This screen only scores a window.
+    <button class="info" data-tip="risk_score" data-label="the risk score"></button>
+  </div>
+
+  <section class="card stack" style="margin-bottom:var(--s5)">
+    <h2 style="font-size:1.25rem">The window</h2>
+    <div class="grid-form">
+      <div class="field">
+        <label for="start">Starts</label>
+        <input type="datetime-local" id="start" value="2026-09-10T10:00">
+        <span class="hint">A weekday afternoon is where departments usually hurt.</span>
+      </div>
+      <div class="field">
+        <label for="hours">How many hours</label>
+        <input type="number" id="hours" value="4" min="1" max="24">
+      </div>
+      <div class="field">
+        <label for="calls">Calls your department runs a day
+          <button class="info" data-tip="expected_calls" data-label="expected calls"></button>
+        </label>
+        <input type="number" id="calls" value="1.6" min="0.1" max="200" step="0.1">
+        <span class="hint">A small rural department is often between 1 and 3.</span>
+      </div>
+      <div class="field">
+        <label for="weather">Weather
+          <button class="info" data-tip="hazard" data-label="the weather hazard"></button>
+        </label>
+        <select id="weather">
+          <option value="">Nothing active</option>
+          <option value="ice storm warning">Ice storm warning</option>
+          <option value="winter storm warning">Winter storm warning</option>
+          <option value="red flag warning">Red flag warning</option>
+          <option value="tornado warning">Tornado warning</option>
+          <option value="flood warning">Flood warning</option>
+          <option value="severe thunderstorm warning">Severe thunderstorm warning</option>
+          <option value="excessive heat warning">Excessive heat warning</option>
+          <option value="high wind warning">High wind warning</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <section class="card stack" style="margin-bottom:var(--s5)">
+    <h2 style="font-size:1.25rem">Who could turn out</h2>
+    <p class="muted small" style="margin:0">Not who is on the roster. Who would actually come if the
+    tone dropped in that window.
+    <button class="info" data-tip="p_understaffed" data-label="response probability"></button></p>
+    <div id="people"></div>
+    <div class="btn-row">
+      <button class="btn" id="add" type="button">Add a person</button>
+      <button class="btn" id="fewer" type="button">Remove the last</button>
+    </div>
+  </section>
+
+  <section class="card stack" style="margin-bottom:var(--s5)">
+    <h2 style="font-size:1.25rem">The smallest crew that can roll
+      <button class="info" data-tip="min_crew" data-label="minimum crew"></button></h2>
+    <div class="grid-form">
+      <div class="field">
+        <label for="need-driver">Driver operators needed</label>
+        <input type="number" id="need-driver" value="1" min="0" max="6">
+      </div>
+      <div class="field">
+        <label for="need-ff">Firefighters needed</label>
+        <input type="number" id="need-ff" value="2" min="0" max="8">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="go" type="button">Score this window</button>
+    </div>
+  </section>
+
+  <div id="out"></div>
+
+  <section class="card stack" style="margin-top:var(--s6)">
+    <h2 style="font-size:1.125rem">Or call it from your own code</h2>
+    <pre class="formula">curl -X POST https://zjrrw6wpxj.us-east-1.awsapprunner.com/api/risk/score \
+  -H "content-type: application/json" -d '{
+    "window_start": "2026-09-10T10:00", "hours": 4,
+    "available": [{"roles": ["firefighter"], "responds": 0.45}],
+    "min_crew": {"driver_operator": 1, "firefighter": 2},
+    "calls_per_day": 2.5, "weather": "ice storm warning"
+  }'</pre>
+    <p class="small muted" style="margin:0">Full schema at <a href="/docs">/docs</a>. The engine is
+    in <code>src/turnout/engine/risk.py</code> and every property it holds to is unit tested.</p>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div><a href="index.html">Back to the overview</a> &middot; <a href="start.html">Set up a
+      department</a> &middot; MIT licence</div>
+    <div class="theme-toggle"></div>
+  </div>
+</footer>
+
+<script src="infotips.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  "use strict";
+  var ROLES = [["firefighter", "Firefighter"], ["driver_operator", "Driver operator"],
+               ["emt", "EMT"], ["officer", "Officer"]];
+  var people = document.getElementById("people");
+  var out = document.getElementById("out");
+
+  function addPerson(roles, responds) {
+    var row = window.h("div", { class: "person" });
+    var chips = window.h("div", { class: "roles" });
+    ROLES.forEach(function (pair) {
+      var input = window.h("input", { type: "checkbox", value: pair[0] });
+      if ((roles || ["firefighter"]).indexOf(pair[0]) >= 0) input.checked = true;
+      chips.appendChild(window.h("label", { class: "chip-check" }, [input, pair[1]]));
+    });
+    row.appendChild(chips);
+    var num = window.h("input", { type: "number", min: "0", max: "1", step: "0.05",
+      value: String(responds === undefined ? 0.32 : responds), "aria-label": "Chance they respond" });
+    row.appendChild(window.h("label", { class: "small muted",
+      style: "display:flex;gap:8px;align-items:center" }, ["responds ", num]));
+    people.appendChild(row);
+  }
+
+  document.getElementById("add").addEventListener("click", function () { addPerson(); });
+  document.getElementById("fewer").addEventListener("click", function () {
+    if (people.children.length > 1) people.removeChild(people.lastElementChild);
+  });
+
+  addPerson(["firefighter"], 0.45);
+
+  function collect() {
+    return Array.prototype.map.call(people.children, function (row) {
+      var roles = Array.prototype.filter
+        .call(row.querySelectorAll("input[type=checkbox]"), function (c) { return c.checked; })
+        .map(function (c) { return c.value; });
+      var responds = parseFloat(row.querySelector("input[type=number]").value);
+      return { roles: roles.length ? roles : ["firefighter"],
+               responds: isNaN(responds) ? 0.32 : responds };
+    });
+  }
+
+  function message(text) {
+    out.innerHTML = "";
+    out.appendChild(window.h("div", { class: "card" }, [window.h("p", { style: "margin:0", text: text })]));
+  }
+
+  function render(d) {
+    out.innerHTML = "";
+    var i = d.inputs;
+    var card = window.h("div", { class: "card verdict " + d.level + " stack" }, [
+      window.h("div", { class: "gap-head" }, [
+        window.h("span", { class: "score", text: d.risk_score.toFixed(2) }),
+        window.levelBadge(d.level, d.level)
+      ]),
+      window.h("p", { style: "margin:0;font-size:1.0625rem",
+        text: d.explanation.charAt(0).toUpperCase() + d.explanation.slice(1) + "." })
+    ]);
+
+    var dl = window.h("dl", { class: "kv" });
+    function row(k, v, tip) {
+      var dt = window.h("dt", {}, [k]);
+      if (tip) dt.appendChild(window.infoBtn(tip, k));
+      dl.appendChild(dt);
+      dl.appendChild(window.h("dd", { text: v }));
+    }
+    row("Expected calls", i.expected_calls.toFixed(2) + " in this window", "expected_calls");
+    row("Weather hazard", i.hazard === 1 ? "none" : i.hazard.toFixed(1) + "x (" + i.hazard_names.join(", ") + ")", "hazard");
+    row("Chance nobody qualified responds", Math.round(i.p_understaffed * 100) + "%", "p_understaffed");
+    row("Time-critical weighting", i.severity.toFixed(2), "severity");
+    row("Crew short of", i.missing_roles.length
+      ? i.missing_roles.join(" and ").replace(/_/g, " ") : "nothing", "min_crew");
+    row("People you said could turn out", String(i.people_available), null);
+    card.appendChild(dl);
+    card.appendChild(window.h("pre", { class: "formula", text: d.formula }));
+    card.appendChild(window.h("p", { class: "small muted", style: "margin:0", text: d.note }));
+    out.appendChild(card);
+    window.MountInfo();
+  }
+
+  document.getElementById("go").addEventListener("click", function () {
+    var btn = this;
+    btn.disabled = true;
+    message("Scoring the window.");
+    var min_crew = {};
+    var d = parseInt(document.getElementById("need-driver").value, 10);
+    var f = parseInt(document.getElementById("need-ff").value, 10);
+    if (d > 0) min_crew.driver_operator = d;
+    if (f > 0) min_crew.firefighter = f;
+
+    fetch("/api/risk/score", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        window_start: document.getElementById("start").value,
+        hours: parseInt(document.getElementById("hours").value, 10) || 4,
+        available: collect(),
+        min_crew: Object.keys(min_crew).length ? min_crew : { firefighter: 1 },
+        calls_per_day: parseFloat(document.getElementById("calls").value) || 1.6,
+        weather: document.getElementById("weather").value
+      })
+    }).then(function (r) {
+      return r.json().then(function (body) {
+        if (!r.ok) throw new Error((body.detail && body.detail.error) || ("the server returned " + r.status));
+        return body;
+      });
+    }).then(render).catch(function (e) {
+      message(navigator.onLine
+        ? "That did not work: " + e.message + ". Your settings are still here, so adjust and try again."
+        : "You are offline, so the window was not scored. Nothing was lost.");
+    }).then(function () { btn.disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>

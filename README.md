@@ -121,6 +121,28 @@ for its roster and asserts no roster comes back.
 | A2A | AgentCard discovery, an offer, a decline with its reason, roster isolation, and a full negotiation |
 | Coverage flow | Gap detected, closed by a member, closed by a neighbour, batched into one interrupt |
 
+## Bring your own data
+
+This is not only a scripted demo.
+
+- **`/try.html`** points the risk engine at your own department. Say who could actually turn out on a
+  given afternoon, what your minimum crew is, how many calls a day you run, and what the weather is
+  doing, and it returns the same verdict the demo uses, with every number behind it.
+- **`/start.html`** takes a paste of whatever roster you already have, in any format, and reads names,
+  numbers and roles out of it.
+- Or from your own code:
+
+```bash
+curl -X POST <host>/api/risk/score -H "content-type: application/json" -d '{
+  "window_start": "2026-09-10T10:00", "hours": 4,
+  "available": [{"roles": ["firefighter"], "responds": 0.45}],
+  "min_crew": {"driver_operator": 1, "firefighter": 2},
+  "calls_per_day": 2.5, "weather": "ice storm warning"
+}'
+```
+
+Nothing is stored, and nobody is texted.
+
 ## For judges
 
 Start at the deployed URL, or `http://localhost:8000` after the two commands above.
