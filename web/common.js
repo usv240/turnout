@@ -137,20 +137,25 @@
     return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()] + " " + window.fmtTime(iso);
   };
 
-  /* A code block wide enough to scroll is a scrollable region, and a scrollable region that cannot
-     take focus cannot be read with a keyboard. axe reports it as serious, and it is. */
-  function makeCodeBlocksFocusable() {
-    Array.prototype.forEach.call(document.querySelectorAll("pre"), function (el) {
+  /* Anything wide enough to scroll is a scrollable region, and a scrollable region that cannot take
+     focus cannot be read with a keyboard. axe reports it as serious, and it is. Code blocks and the
+     wide tables both qualify, the tables only at narrow widths, which is exactly the case a mouse
+     user never sees and a phone user always does. */
+  function makeScrollablesFocusable() {
+    var LABELS = { PRE: "Code block", DIV: "Scrollable table", TABLE: "Scrollable table" };
+    Array.prototype.forEach.call(document.querySelectorAll("pre, .scroll-x"), function (el) {
       if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "0");
       if (!el.hasAttribute("role")) el.setAttribute("role", "region");
-      if (!el.hasAttribute("aria-label")) el.setAttribute("aria-label", "Code block");
+      if (!el.hasAttribute("aria-label")) {
+        el.setAttribute("aria-label", LABELS[el.tagName] || "Scrollable region");
+      }
     });
   }
 
   document.addEventListener("DOMContentLoaded", function () {
     mountThemeToggle();
     mountInfoButtons();
-    makeCodeBlocksFocusable();
+    makeScrollablesFocusable();
   });
   window.MountInfo = mountInfoButtons;
 })();

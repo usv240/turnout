@@ -54,16 +54,28 @@
     host.innerHTML = "";
     var nextUndone = state.steps.filter(function (s) { return !s.done; })[0];
     state.steps.forEach(function (s) {
+      // The week happens in order. Asking the neighbours before the coverage pass would send a
+      // request about a gap nothing has found yet, so a step that is not next is disabled and says
+      // why rather than failing quietly.
       var isNext = nextUndone && nextUndone.id === s.id;
       var b = window.h("button", {
         class: "btn" + (isNext ? " primary" : ""),
         type: "button",
-        disabled: s.done || busy ? "" : null,
+        title: s.done ? "Already played" : (isNext ? s.detail : "Play the steps before this first"),
+        disabled: s.done || busy || !isNext ? "" : null,
         onclick: function () { runStep(s.id, s.detail); }
       }, [s.done ? "Done: " + s.title : s.title]);
-      if (s.done) b.disabled = true;
+      if (s.done || busy || !isNext) b.disabled = true;
       host.appendChild(b);
     });
+    if (nextUndone && !playing) {
+      host.appendChild(window.h("button", {
+        class: "btn", type: "button", id: "play-all",
+        title: "Run every remaining step, one after another",
+        disabled: busy ? "" : null,
+        onclick: playThrough
+      }, ["Play the rest of the week"]));
+    }
 
     var doneCount = state.steps.filter(function (s) { return s.done; }).length;
     var shared = document.getElementById("shared-note");
@@ -485,6 +497,31 @@
       traceEvents = traceEvents.concat(t.events);
       traceCursor = t.next;
     });
+  }
+
+  /* Playing it through -----------------------------------------------------
+     Each step is a real agent run, so there is a pause between them. Someone watching, or
+     recording, should not have to sit with a finger over the button for that pause. */
+  var playing = false;
+
+  function playThrough() {
+    if (busy || playing) return;
+    playing = true;
+    (function nextOne() {
+      var left = state.steps.filter(function (s) { return !s.done; });
+      if (!left.length) { playing = false; renderAll(); return; }
+      var s = left[0];
+      setBusy(true, "Running: " + s.detail);
+      api("/api/step", { method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ step: s.id }) })
+        .then(function (d) { state = d; return pullTrace(); })
+        .then(function () {
+          setBusy(false);
+          renderAll();
+          setTimeout(nextOne, 900);
+        })
+        .catch(function (e) { playing = false; fail(e); });
+    })();
   }
 
   function runStep(id, detail) {
