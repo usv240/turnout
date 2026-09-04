@@ -55,7 +55,8 @@ class Member(BaseModel):
     quiet_hours: tuple[int, int] = (22, 6)  # local hours, start and end
     opted_out: bool = False
     asks_this_week: int = 0
-    # window_type -> stats. Window types: weekday_day, weekday_evening, weekday_night, weekend_day, weekend_evening, weekend_night
+    # window_type -> stats. Window types: weekday_day, weekday_evening, weekday_night,
+    # weekend_day, weekend_evening, weekend_night
     response_stats: dict[str, ResponseStats] = Field(default_factory=dict)
 
 

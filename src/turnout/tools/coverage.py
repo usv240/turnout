@@ -20,8 +20,8 @@ from datetime import datetime, timedelta
 from strands import tool
 
 from turnout.engine.feasibility import is_feasible
-from turnout.engine.risk import RateModel, p_understaffed, response_probability, score_window, window_type
-from turnout.models import Gap, Level, Member, ResponseStats, RiskInputs, Role
+from turnout.engine.risk import RateModel, response_probability, score_window, window_type
+from turnout.models import Gap, Level, Member, ResponseStats, RiskInputs
 from turnout.tools.common import dept, now, parse_dt, rt
 
 # Shift boundaries. A gap window never crosses one, so gaps read like a chief's day: 06-10, 10-14, 14-17, 17-22, 22-06.

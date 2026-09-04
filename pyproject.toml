@@ -7,6 +7,9 @@ license = { text = "MIT" }
 requires-python = ">=3.12"
 dependencies = [
     "strands-agents[a2a]",
+    # a2a-sdk 1.0 moved DataPart out of a2a.types, which strands 1.18 still imports. Unpinned, a
+    # fresh build pulls 1.x and both peer servers fail to start.
+    "a2a-sdk<1.0",
     "strands-agents-tools",
     "bedrock-agentcore",
     "pydantic>=2",
@@ -34,5 +37,24 @@ pythonpath = ["src"]
 asyncio_mode = "auto"
 
 [tool.ruff]
-line-length = 110
+line-length = 120
 target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "C4", "RUF"]
+ignore = [
+    # The clock is simulated and every timestamp in this project is local wall time on purpose, so
+    # a timezone-aware datetime would be a lie about precision this domain does not have.
+    "DTZ",
+    # Around AWS and a peer agent, a broad except is the point: the fallback path exists so that a
+    # managed service having a bad minute degrades rather than takes the product down.
+    "BLE001",
+    "B008",  # FastAPI dependencies are function calls in defaults by design
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
+# A prompt and a table of synthetic data read better as one line each than wrapped mid sentence.
+"src/*/agents/prompts.py" = ["E501"]
+"src/*/data/generate.py" = ["E501"]
+"src/*/messaging.py" = ["E501"]

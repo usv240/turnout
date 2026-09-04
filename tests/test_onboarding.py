@@ -1,5 +1,5 @@
-from turnout.onboarding import CREW_PRESETS, clean_name, find_roles, normalise_phone, parse_roster
 from turnout.models import Role
+from turnout.onboarding import CREW_PRESETS, clean_name, find_roles, normalise_phone, parse_roster
 
 GROUP_TEXT = """
 Dana Ortiz (Chief) 555-298-6397

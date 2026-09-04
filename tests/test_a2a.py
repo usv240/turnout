@@ -18,6 +18,9 @@ from turnout import runtime
 from turnout.a2a.client import extract_json, fetch_card, send_text
 from turnout.models import CoverageOffer, CoverageRequest, Level, Role
 
+# Every test here runs real agents on real HTTP servers, so all of them need credentials.
+pytestmark = pytest.mark.aws
+
 SCENARIO = "data/scenarios/demo_week.json"
 GID = "millbrook-20260910T10-fire"
 

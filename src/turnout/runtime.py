@@ -7,11 +7,14 @@ explicit makes every tool testable with a MemoryStore and a simulated clock.
 
 from __future__ import annotations
 
+import contextlib
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from turnout.clock import Clock
-from turnout.config import Settings, settings as default_settings
+from turnout.config import Settings
+from turnout.config import settings as default_settings
 from turnout.store import MemoryStore, Store
 
 EventListener = Callable[[str, dict[str, Any]], None]
@@ -38,10 +41,10 @@ class Runtime:
         evt = {"kind": kind, "at": self.clock.now().isoformat(), "dept_id": self.dept_id, **payload}
         self.trace.append(evt)
         for fn in list(self.listeners):
-            try:
+            # A listener is the web app or the trace viewer. Neither is allowed to break an agent
+            # mid decision, so a listener that raises is dropped rather than propagated.
+            with contextlib.suppress(Exception):
                 fn(kind, evt)
-            except Exception:  # listeners must never break the agent
-                pass
 
 
 ctx: Runtime | None = None

@@ -26,7 +26,7 @@ from datetime import datetime, timedelta
 from itertools import product
 
 from turnout.engine import kernel
-from turnout.engine.feasibility import is_feasible, missing_roles
+from turnout.engine.feasibility import is_feasible
 from turnout.models import Call, Level, Role, WeatherAlert
 
 # Hour-of-day weights shaped like the national fire department call pattern:
@@ -93,7 +93,7 @@ class RateModel:
     severity_by_hour: list[float]  # share of time-critical calls by hour, smoothed
 
     @classmethod
-    def from_history(cls, calls: list[Call], now: datetime, national_base_per_day: float = 1.6) -> "RateModel":
+    def from_history(cls, calls: list[Call], now: datetime, national_base_per_day: float = 1.6) -> RateModel:
         if not calls:
             return cls(0, national_base_per_day / 24, NATIONAL_HOUR_PROFILE, NATIONAL_DOW_PROFILE,
                        NATIONAL_MONTH_PROFILE, [0.65] * 24)
@@ -121,9 +121,9 @@ class RateModel:
             return [(x / total) * n for x in counts]
 
         own_hour, own_dow, own_month = norm(hour_counts), norm(dow_counts), norm(month_counts)
-        hour_w = [w * o + (1 - w) * n for o, n in zip(own_hour, NATIONAL_HOUR_PROFILE)]
-        dow_w = [w * o + (1 - w) * n for o, n in zip(own_dow, NATIONAL_DOW_PROFILE)]
-        month_w = [w * o + (1 - w) * n for o, n in zip(own_month, NATIONAL_MONTH_PROFILE)]
+        hour_w = [w * o + (1 - w) * n for o, n in zip(own_hour, NATIONAL_HOUR_PROFILE, strict=True)]
+        dow_w = [w * o + (1 - w) * n for o, n in zip(own_dow, NATIONAL_DOW_PROFILE, strict=True)]
+        month_w = [w * o + (1 - w) * n for o, n in zip(own_month, NATIONAL_MONTH_PROFILE, strict=True)]
         sev = []
         for h in range(24):
             if hour_counts[h] >= 5:
@@ -172,7 +172,7 @@ def p_understaffed(
         for mask in product([0, 1], repeat=n):
             p = 1.0
             roles: list[set[Role]] = []
-            for present, (r, pr) in zip(mask, members):
+            for present, (r, pr) in zip(mask, members, strict=True):
                 p *= pr if present else (1 - pr)
                 if present:
                     roles.append(r)
@@ -274,7 +274,7 @@ def score_window(
     elif exp_calls < 0.75:
         calls_txt = "under 1 call expected"
     else:
-        lo, hi = max(1, int(round(exp_calls - 0.5))), int(math.ceil(exp_calls + 0.5))
+        lo, hi = max(1, round(exp_calls - 0.5)), math.ceil(exp_calls + 0.5)
         calls_txt = f"{lo} to {hi} calls expected" if lo != hi else f"{lo} call expected"
     words = {"driver_operator": "a driver", "firefighter": "a firefighter", "emt": "an EMT", "officer": "an officer"}
     if missing:
@@ -287,7 +287,7 @@ def score_window(
     elif not available:
         parts = [calls_txt, "nobody available"]
     else:
-        parts = [calls_txt, f"{int(round(pu * 100))}% chance nobody qualified responds"]
+        parts = [calls_txt, f"{round(pu * 100)}% chance nobody qualified responds"]
     if names:
         parts.append(", ".join(n.lower() for n in names))
     if rate.history_days < SMOOTHING_DAYS:

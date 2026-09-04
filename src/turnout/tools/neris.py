@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-
 from strands import tool
 
 from turnout.models import NerisDraft

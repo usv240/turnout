@@ -142,7 +142,8 @@ def run(scenario_path: str, out_dir: str, skip_llm_extras: bool = False) -> dict
     for m in rt.store.list_messages("millbrook", chief):
         say(f"   [{m.at:%a %H:%M}] {'<-' if m.direction == 'out' else '->'} {m.body!r}")
     outbound = [m for m in rt.store.list_messages("millbrook") if m.direction == "out" and m.member_id]
-    say(f"== Member texts sent: {len(outbound)}; held for quiet hours: {sum(1 for m in outbound if m.held_for_quiet_hours)}")
+    held = sum(1 for m in outbound if m.held_for_quiet_hours)
+    say(f"== Member texts sent: {len(outbound)}; held for quiet hours: {held}")
 
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)

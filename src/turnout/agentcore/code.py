@@ -15,6 +15,7 @@ that degrades and tells you.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import threading
 import time
@@ -121,11 +122,9 @@ class RiskKernelSession:
 
     def close(self) -> None:
         if self._session_id and self._client:
-            try:
+            with contextlib.suppress(Exception):
                 self._client.stop_code_interpreter_session(
                     codeInterpreterIdentifier=self.identifier, sessionId=self._session_id)
-            except Exception:
-                pass
         self._session_id = None
 
     # the one call --------------------------------------------------------------

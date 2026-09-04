@@ -12,7 +12,7 @@ from strands import tool
 
 from turnout.engine.risk import response_probability, window_type
 from turnout.messaging import fmt_day, fmt_hour, role_word
-from turnout.models import ResponseStats, Role
+from turnout.models import ResponseStats
 from turnout.tools.common import dept, in_quiet_hours, now, rt
 from turnout.tools.coverage import _gap_summary, compute_gaps
 
@@ -158,12 +158,11 @@ def check_asks(gap_id: str) -> dict:
     roles_changed = bool(g.asked_for_roles) and set(g.asked_for_roles) != missing_now
     expired = bool(g.next_check and now() >= g.next_check)
 
-    if roles_changed and not pending:
-        # progress was made; a fresh round is allowed if anyone is left to ask
-        if rank_candidates(gap_id, limit=1):
-            r.emit("gap_status", gap_id=gap_id, status="asking_members", note="missing role changed, ask again")
-            return {"gap_id": gap_id, "next_action": "ask_again", "replies": replies,
-                    "missing_roles": sorted(x.value for x in missing_now)}
+    # Progress was made, so a fresh round is allowed, but only if anyone is left to ask.
+    if roles_changed and not pending and rank_candidates(gap_id, limit=1):
+        r.emit("gap_status", gap_id=gap_id, status="asking_members", note="missing role changed, ask again")
+        return {"gap_id": gap_id, "next_action": "ask_again", "replies": replies,
+                "missing_roles": sorted(x.value for x in missing_now)}
     if pending and not expired:
         return {"gap_id": gap_id, "next_action": "still_waiting", "pending": pending, "replies": replies,
                 "until": g.next_check.isoformat() if g.next_check else None}

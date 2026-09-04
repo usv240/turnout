@@ -5,7 +5,6 @@ Deterministic where it can be (the rule parser), model-backed only for replies t
 
 from __future__ import annotations
 
-import json
 from datetime import datetime, timedelta
 
 from turnout import runtime
@@ -148,11 +147,13 @@ def handle_inbound(from_phone: str, text: str, at: datetime | None = None) -> di
         ps = start.replace(hour=parsed.window_start_hour) if parsed.window_start_hour is not None else start
         pe = start.replace(hour=parsed.window_end_hour) if parsed.window_end_hour is not None else end
         if pe <= ps:
-            r.sms.send(d.id, m.phone, render("clarify", dept=d.short_name, day=fmt_day(start)), "clarify", member_id=m.id)
+            r.sms.send(d.id, m.phone, render("clarify", dept=d.short_name, day=fmt_day(start)),
+                       "clarify", member_id=m.id)
             return {"handled": True, "intent": "clarify"}
         _record(r, d.id, m.id, ps, pe, "partial", src, text)
         # the original poll window is resolved too, as unavailable outside the partial span
-        echo = render("poll_echo_partial", dept=d.short_name, day=fmt_day(start), until=fmt_hour(pe) if parsed.window_end_hour else f"from {fmt_hour(ps)}")
+        until = fmt_hour(pe) if parsed.window_end_hour else f"from {fmt_hour(ps)}"
+        echo = render("poll_echo_partial", dept=d.short_name, day=fmt_day(start), until=until)
         if src == "ask":
             learn_response(m.id, start, True)
     else:
@@ -175,7 +176,6 @@ def _record(r, dept_id: str, member_id: str, start: datetime, end: datetime, sta
 
 
 def _handle_chief(text: str) -> dict:
-    r = runtime.get()
     parsed = parse_reply(text)
     if parsed.intent == "decision" and parsed.decision_choice:
         return apply_chief_reply(parsed.decision_choice)

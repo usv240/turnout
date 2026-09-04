@@ -10,7 +10,8 @@ import re
 
 from turnout.models import ParsedReply
 
-YES = {"y", "yes", "yep", "yeah", "yup", "sure", "ok", "okay", "can do", "in", "i can", "i'm in", "im in", "count me in",
+YES = {"y", "yes", "yep", "yeah", "yup", "sure", "ok", "okay", "can do", "in", "i can", "i'm in",
+       "im in", "count me in",
        "available", "good", "affirmative", "10-4", "104", "roger"}
 NO = {"n", "no", "nope", "nah", "can't", "cant", "cannot", "out", "not available", "unavailable", "negative",
        "not this time", "busy", "working", "no can do"}

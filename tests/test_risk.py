@@ -61,7 +61,7 @@ def test_p_understaffed_nobody():
 
 def test_p_understaffed_monotone_in_members():
     base = [({Role.DRIVER_OPERATOR}, 0.4), ({Role.FIREFIGHTER}, 0.4), ({Role.FIREFIGHTER}, 0.4)]
-    more = base + [({Role.FIREFIGHTER, Role.DRIVER_OPERATOR}, 0.4)]
+    more = [*base, ({Role.FIREFIGHTER, Role.DRIVER_OPERATOR}, 0.4)]
     assert p_understaffed(more, FIRE) <= p_understaffed(base, FIRE)
 
 
@@ -108,7 +108,7 @@ def test_hazard_never_decreases_risk():
 def test_more_members_never_increases_risk():
     rm = RateModel.from_history(_history(2.0), NOW)
     few = [({Role.FIREFIGHTER}, 0.6)]
-    more = few + [({Role.DRIVER_OPERATOR}, 0.6), ({Role.FIREFIGHTER}, 0.6)]
+    more = [*few, ({Role.DRIVER_OPERATOR}, 0.6), ({Role.FIREFIGHTER}, 0.6)]
     assert score_window(THU_10, THU_14, more, FIRE, rm, []).risk_score <= \
         score_window(THU_10, THU_14, few, FIRE, rm, []).risk_score
 

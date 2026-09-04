@@ -20,14 +20,12 @@ from turnout.models import ParsedReply
 from turnout.tools.certs import find_expiring_certs, propose_training
 from turnout.tools.chief import send_decisions, send_status
 from turnout.tools.closer import check_asks, rank_candidates, send_ask
-from turnout.tools.coverage import compute_coverage, get_gap, list_gaps, update_gap
+from turnout.tools.coverage import compute_coverage, get_gap, list_gaps
 from turnout.tools.ledger import get_ledger
 from turnout.tools.neris import get_incident, save_neris_draft
 from turnout.tools.peers import request_coverage_from_peers
-from turnout.tools.roster import get_department, get_member_response_probability, list_members
-from turnout.tools.sms import send_member_sms
+from turnout.tools.roster import get_department, list_members
 from turnout.tools.weather import get_weather_alerts
-
 
 NL2 = chr(10) * 2  # blank line between the preamble and the agent's own prompt
 

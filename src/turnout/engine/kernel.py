@@ -98,7 +98,7 @@ def p_understaffed(members: list, min_crew: dict, rng_seed: int = 7,
         for mask in product([0, 1], repeat=n):
             p = 1.0
             roles = []
-            for present, (r, pr) in zip(mask, members):
+            for present, (r, pr) in zip(mask, members, strict=True):
                 p *= pr if present else (1 - pr)
                 if present:
                     roles.append(set(r))

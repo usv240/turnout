@@ -33,7 +33,7 @@ def travel_minutes(a: tuple[float, float], b: tuple[float, float]) -> int:
     dlat, dlon = lat2 - lat1, lon2 - lon1
     h = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
     km = 2 * 6371 * math.asin(math.sqrt(h))
-    return int(round(km / SPEED_KMH * 60)) + TURNOUT_MIN
+    return round(km / SPEED_KMH * 60) + TURNOUT_MIN
 
 
 def evaluate_request(req: CoverageRequest, rt=None) -> CoverageOffer:

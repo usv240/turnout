@@ -184,7 +184,7 @@ class MemoryStore:
         p.write_text(json.dumps(blob, indent=1), encoding="utf-8")
 
     @classmethod
-    def load(cls, path: str) -> "MemoryStore":
+    def load(cls, path: str) -> MemoryStore:
         blob = json.loads(Path(path).read_text(encoding="utf-8"))
         s = cls(persist_path=path)
         for d in blob["departments"]:
