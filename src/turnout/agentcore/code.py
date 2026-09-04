@@ -26,6 +26,29 @@ CALL_TIMEOUT = 25.0
 
 _KERNEL_SRC = Path(__file__).resolve().parents[1] / "engine" / "kernel.py"
 
+NEWLINE = chr(10)
+MARKER = "TURNOUT_RESULT:"
+
+
+def _first_json_after_marker(out: str, marker: str):
+    """Find the line the sandbox printed, not the line it echoed.
+
+    Code Interpreter echoes the source it ran before the output, so the marker appears twice: once
+    inside the print statement and once at the start of the real result. Taking the first hit gets
+    the echo and produces a JSON error, so scan every line and return the first one that both starts
+    with the marker and parses.
+    """
+    for line in out.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith(marker):
+            continue
+        try:
+            return json.loads(stripped[len(marker):])
+        except ValueError:
+            continue
+    return None
+
+
 
 class CodeInterpreterUnavailable(RuntimeError):
     pass
@@ -78,7 +101,9 @@ class RiskKernelSession:
             name="writeFiles",
             arguments={"content": [{"path": "kernel.py", "text": src}]},
         )
-        out = self._raw("import kernel, json; print('kernel loaded', kernel.SCALE)")
+        out = self._raw(
+            "import kernel, json; "
+            "print('kernel loaded', len(dir(kernel)))")
         if "kernel loaded" not in out:
             raise CodeInterpreterUnavailable(f"kernel did not import in the sandbox: {out[:160]}")
 
@@ -111,14 +136,13 @@ class RiskKernelSession:
         code = (
             "import json, kernel\n"
             f"payload = json.loads(r'''{json.dumps(payload)}''')\n"
-            "print('RESULT:' + json.dumps(kernel.score(payload)))\n"
+            f"print('{MARKER}' + json.dumps(kernel.score(payload)))" + NEWLINE
         )
         out = self._raw(code)
-        marker = out.find("RESULT:")
-        if marker < 0:
+        result = _first_json_after_marker(out, MARKER)
+        if result is None:
             self._session_id = None  # a broken session should not be reused
             raise CodeInterpreterUnavailable(f"no result from the sandbox: {out[:200]}")
-        result = json.loads(out[marker + len("RESULT:"):].strip().splitlines()[0])
         result["ran_in"] = "agentcore_code_interpreter"
         result["session_id"] = self._session_id
         result["ms"] = int((time.time() - started) * 1000)
