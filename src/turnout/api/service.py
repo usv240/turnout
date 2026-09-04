@@ -190,6 +190,57 @@ class DemoService:
                  "body": m.body, "purpose": m.purpose, "held": m.held_for_quiet_hours}
                 for m in self.rt.store.list_messages("millbrook", phone)]
 
+    def crew(self) -> dict:
+        """What the agent knows about each member, and what it has asked of them.
+
+        A scheduling agent asks real people for real hours of their life. Everything it uses to
+        decide who to ask is here, in the words the member would use: how often it has already
+        asked this week, when it will not text them, and how often they have said yes before. If a
+        person cannot see that, they cannot argue with it.
+        """
+        from turnout.engine.kernel import response_probability
+        from turnout.tools.chief import DAILY_INTERRUPT_BUDGET
+
+        r = self.rt
+        d = r.store.get_department("millbrook")
+        messages = self.messages()
+        out = []
+        for m in r.store.list_members("millbrook"):
+            mine = [x for x in messages if x["member_id"] == m.id]
+            stats = []
+            for window, st in sorted(m.response_stats.items()):
+                stats.append({"window": window, "yes": st.yes, "no": st.no,
+                              "probability": round(response_probability(st.yes, st.no), 3)})
+            yes = sum(x.yes for x in m.response_stats.values())
+            no = sum(x.no for x in m.response_stats.values())
+            out.append({
+                "id": m.id, "name": m.name, "phone": m.phone,
+                "roles": [x.value for x in m.roles],
+                "certs": [{"type": c.type, "expires": c.expires.date().isoformat()}
+                          for c in m.certs],
+                "opted_out": m.opted_out,
+                "quiet_hours": list(m.quiet_hours),
+                "asks_this_week": m.asks_this_week,
+                "weekly_ask_limit": d.weekly_ask_limit,
+                "overall": {"yes": yes, "no": no,
+                            "probability": round(response_probability(yes, no), 3)},
+                "by_window": stats,
+                "messages": mine,
+                "poll_count": sum(1 for x in mine
+                                  if x["direction"] == "out" and x["purpose"] == "poll"),
+                "asked_count": sum(1 for x in mine
+                                   if x["direction"] == "out" and x["purpose"] == "ask"),
+                "held_count": sum(1 for x in mine if x["held"]),
+            })
+        return {
+            "department": {"name": d.name, "short_name": d.short_name,
+                           "weekly_ask_limit": d.weekly_ask_limit,
+                           "chief_interrupt_budget": DAILY_INTERRUPT_BUDGET},
+            "prior": {"mean": 0.32, "strength": 10,
+                      "source": "Predictive Dispatch of Volunteer First Responders, 2023"},
+            "members": out,
+        }
+
     def trace(self, since: int = 0) -> dict:
         return {"events": self.rt.trace[since:], "next": len(self.rt.trace)}
 

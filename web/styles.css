@@ -176,7 +176,9 @@ body.app .btn { min-height: 48px; }
 /* InfoTip ----------------------------------------------------------------- */
 .info {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 20px; height: 20px; margin-left: 6px; flex: none;
+  /* 24 by 24 is the WCAG 2.2 AA minimum target size (2.5.8). The glyph stays small; the button
+     around it does not. */
+  width: 24px; height: 24px; margin-left: 6px; flex: none;
   border-radius: var(--r-pill); border: 1px solid var(--border);
   background: var(--surface-2); color: var(--text-muted);
   font-size: 12px; font-weight: 700; font-style: italic; line-height: 1;
@@ -391,3 +393,11 @@ html, body { overflow-x: clip; }
 }
 .conn.gone { border-color: var(--danger); background: var(--danger-soft); }
 .conn button { flex: none; }
+
+/* WCAG 2.2 AA target size (2.5.8). Two links stacked in a table cell with only a <br> between them
+   sit closer than 24 CSS pixels apart, which axe reports and a thumb agrees with. */
+table.plain td a { display: inline-block; padding: 5px 0; }
+
+/* A block that scrolls has to be reachable by keyboard, or its content is unreadable without a
+   mouse. common.js gives every code block tabindex 0; this is the focus ring for it. */
+pre.formula:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

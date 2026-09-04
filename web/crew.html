@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turnout: what the agent asks of you</title>
+<meta name="description" content="The accountability side of a scheduling agent. Everything Turnout knows about each volunteer, every message it has sent them, and the limits it cannot talk its way around.">
+<script>
+  (function () {
+    try {
+      var m = localStorage.getItem("turnout-theme");
+      document.documentElement.setAttribute("data-theme", m && m !== "system" ? m : "light");
+    } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23B3261E'/></svg>">
+<style>
+  .crew { display: grid; gap: var(--s4); }
+  @media (min-width: 900px) { .crew { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .crew > .card { margin: 0; min-width: 0; }
+  .mhead { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); flex-wrap: wrap; }
+  .mhead h3 { margin: 0; font-size: 1.0625rem; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: var(--s3) 0 0; padding: 0; list-style: none; }
+  .tags li {
+    font-size: .8125rem; border: 1px solid var(--border); border-radius: var(--r-pill);
+    padding: 3px 10px; color: var(--text-muted);
+  }
+  .bars { margin: var(--s4) 0 0; display: grid; gap: 6px; }
+  .bars .row { display: grid; grid-template-columns: 8.5rem 1fr 3rem; gap: var(--s3); align-items: center; font-size: .8125rem; }
+  .bars .track { background: var(--surface-2); border-radius: var(--r-pill); height: 10px; overflow: hidden; }
+  .bars .fill { background: var(--accent); height: 100%; }
+  .bars .pc { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+  .thread { margin: var(--s4) 0 0; display: grid; gap: 6px; }
+  .thread .line { font-size: .8125rem; padding: 6px 10px; border-radius: var(--r-sm); background: var(--surface-2); }
+  .thread .line.in { background: var(--success-soft); }
+  .thread .line.held { background: var(--warning-soft); }
+  .thread .t { color: var(--text-muted); margin-right: 8px; font-variant-numeric: tabular-nums; }
+  .quota { display: flex; gap: 4px; align-items: center; margin-top: var(--s3); }
+  .pip { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--accent); }
+  .pip.used { background: var(--accent); }
+  details.more > summary { cursor: pointer; font-size: .8125rem; color: var(--accent); margin-top: var(--s3); }
+</style>
+</head>
+<body class="app">
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site">
+  <div class="bar">
+    <a class="brand" href="index.html"><span class="mark" aria-hidden="true"></span> Turnout</a>
+    <div class="header-actions">
+      <div class="theme-toggle"></div>
+      <a class="btn small" href="app.html">The chief's board</a>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="wrap" style="padding-top:var(--s5);padding-bottom:var(--s8)">
+  <a class="backlink" href="index.html"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3 L5 8 l5 5"/></svg>Back to the overview</a>
+
+  <h1 style="font-size:1.75rem">What the agent asks of you</h1>
+  <p class="muted" style="max-width:68ch">Turnout asks unpaid people to give up hours of their
+  life. That is the whole product, and it is the part most worth being careful about. So this page
+  is the other side of the chief's board: for every member, what the agent knows, how many times it
+  has asked this week, the hours it will not text them, and every message it has actually sent.
+  Nothing here is a model's opinion. Every number comes from that member's own history.</p>
+
+  <!-- Written out in full rather than injected, so the block is its final height on first paint.
+       Only the numbers come from the server, and they replace a placeholder of the same width. -->
+  <div id="rules" class="notice" style="margin-bottom:var(--s5)">
+    <strong id="dept-name">Millbrook Volunteer Fire Company.</strong>
+    Four limits the agent cannot argue its way around, because they are enforced in code before the
+    tool runs, not by an instruction in a prompt that a model may or may not follow:
+    <ul style="margin:var(--s3) 0 0">
+      <li>At most <span id="lim-asks">2</span> targeted asks per member per week, on top of the one
+        morning poll.<button class="info" data-tip="hooks" data-label="the hooks"></button></li>
+      <li>No message during a member's quiet hours. It waits, and says it waited.</li>
+      <li>One word, STOP, and the agent never texts that person again.</li>
+      <li>At most <span id="lim-int">3</span> interruptions of the chief in a day, outside a live
+        incident.</li>
+    </ul>
+    <p class="small" style="margin:var(--s3) 0 0" id="prior-line">The prior on the response
+      probability is 32 percent with a strength of 10 observations, from Predictive Dispatch of
+      Volunteer First Responders, 2023. A member with no history is assumed to be about as likely to
+      say yes as the published average, not certain either way.</p>
+  </div>
+
+  <section style="margin-top:var(--s6)" aria-labelledby="crew-h">
+    <h2 id="crew-h" style="font-size:1.25rem">The roster</h2>
+    <p class="muted small" style="margin-top:0;max-width:68ch">The percentage is a Beta posterior
+    over that member's own yes and no history for that kind of window, with a prior taken from the
+    published range for volunteer first responders. It is why the agent asks two specific people
+    rather than texting all fourteen.
+    <button class="info" data-tip="p_understaffed" data-label="the response probability"></button></p>
+    <div class="crew" id="crew"></div>
+  </section>
+
+  <section class="card" style="margin-top:var(--s6)" aria-labelledby="api-h">
+    <h2 id="api-h" style="font-size:1.125rem;margin-top:0">The same record over the API</h2>
+    <p class="muted small">A member who wants to know why they were asked should not have to take
+    anyone's word for it.</p>
+    <pre class="formula"><code id="curl">loading</code></pre>
+    <div class="btn-row">
+      <a class="btn" href="/docs">Full API reference</a>
+      <a class="btn" href="/api/crew">Open this record as JSON</a>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div><a href="index.html">Overview</a> &middot; <a href="app.html">The chief's board</a>
+      &middot; <a href="start.html">Set up your department</a>
+      &middot; <a href="try.html">Score your own window</a> &middot; MIT licence</div>
+    <div class="theme-toggle"></div>
+  </div>
+</footer>
+
+<script src="infotips.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  "use strict";
+  var h = window.h;
+
+  var WINDOW_WORDS = {
+    weekday_day: "Weekday, daytime", weekday_evening: "Weekday, evening",
+    weekday_night: "Weekday, night", weekend_day: "Weekend, daytime",
+    weekend_evening: "Weekend, evening", weekend_night: "Weekend, night"
+  };
+
+  function hour(n) {
+    var suffix = n < 12 ? "am" : "pm";
+    return (n % 12 || 12) + suffix;
+  }
+
+  function fail(message) {
+    // The rules above are true whether or not the roster loaded, so they stay. The failure goes
+    // where the roster would have been.
+    var host = document.getElementById("crew");
+    host.innerHTML = "";
+    host.appendChild(h("div", { class: "card", text:
+      "Could not load the roster: " + message + ". This page only reads, so nothing has been "
+      + "changed. Refresh, or open the chief's board and play a step first." }));
+  }
+
+  fetch("/api/crew").then(function (r) {
+    if (!r.ok) throw new Error("the server returned " + r.status);
+    return r.json();
+  }).then(render).catch(function (e) { fail(e.message); });
+
+  function render(d) {
+    document.getElementById("curl").textContent =
+      "curl -H \"x-api-key: turnout-sandbox\" \\" + "\n  " + location.origin + "/api/crew";
+
+    var dept = d.department || {};
+    // The block is already on the page at its final height. Only the numbers change, so nothing
+    // moves: a page that reflows under a reader is a page that loses their place.
+    document.getElementById("dept-name").textContent = dept.name + ".";
+    document.getElementById("lim-asks").textContent = dept.weekly_ask_limit;
+    document.getElementById("lim-int").textContent = dept.chief_interrupt_budget;
+    document.getElementById("prior-line").textContent =
+      "The prior on the response probability is " + Math.round(d.prior.mean * 100)
+      + " percent with a strength of " + d.prior.strength + " observations, from " + d.prior.source
+      + ". A member with no history is assumed to be about as likely to say yes as the published "
+      + "average, not certain either way.";
+
+    var host = document.getElementById("crew");
+    host.innerHTML = "";
+    (d.members || []).forEach(function (m) { host.appendChild(card(m)); });
+    window.MountInfo();
+  }
+
+  function card(m) {
+    var head = h("div", { class: "mhead" }, [
+      h("h3", { text: m.name }),
+      m.opted_out
+        ? h("span", { class: "badge high" }, [
+            h("span", { class: "shape", "aria-hidden": "true", text: window.SHAPES.high }),
+            h("span", { text: "opted out, never texted" })])
+        : h("span", { class: "badge covered" }, [
+            h("span", { class: "shape", "aria-hidden": "true", text: window.SHAPES.covered }),
+            h("span", { text: Math.round(m.overall.probability * 100) + " percent overall" })])
+    ]);
+
+    var tags = h("ul", { class: "tags" });
+    m.roles.forEach(function (r) { tags.appendChild(h("li", { text: r })); });
+    m.certs.forEach(function (c) {
+      tags.appendChild(h("li", { text: c.type + ", expires " + c.expires }));
+    });
+    tags.appendChild(h("li", { text: "quiet " + hour(m.quiet_hours[0]) + " to "
+      + hour(m.quiet_hours[1]) }));
+
+    var quota = h("div", { class: "quota" }, [
+      h("span", { class: "small muted", style: "margin-right:6px",
+        text: "Asked " + m.asks_this_week + " of " + m.weekly_ask_limit + " this week" })]);
+    for (var i = 0; i < m.weekly_ask_limit; i++) {
+      quota.appendChild(h("span", {
+        class: "pip" + (i < m.asks_this_week ? " used" : ""), "aria-hidden": "true" }));
+    }
+
+    var body = [head, tags, quota];
+
+    if (m.by_window.length) {
+      var bars = h("div", { class: "bars" });
+      m.by_window.forEach(function (w) {
+        bars.appendChild(h("div", { class: "row" }, [
+          h("span", { text: WINDOW_WORDS[w.window] || w.window }),
+          h("div", { class: "track", role: "img",
+            "aria-label": Math.round(w.probability * 100) + " percent, from " + w.yes
+              + " yes and " + w.no + " no" }, [
+            h("div", { class: "fill", style: "width:" + (w.probability * 100).toFixed(1) + "%" })]),
+          h("span", { class: "pc", text: Math.round(w.probability * 100) + "%" })
+        ]));
+      });
+      body.push(bars);
+      body.push(h("p", { class: "small muted", style: "margin:var(--s2) 0 0",
+        text: m.overall.yes + " yes and " + m.overall.no + " no across the last year of calls." }));
+    }
+
+    if (m.messages.length) {
+      var thread = h("div", { class: "thread" });
+      m.messages.forEach(function (x) {
+        thread.appendChild(h("div", {
+          class: "line " + (x.direction === "in" ? "in" : (x.held ? "held" : "")) }, [
+          h("span", { class: "t", text: window.fmtDayTime(x.at) }),
+          // The held message says so in its own first sentence, so the tint is not the only signal.
+          h("span", { text: x.body })
+        ]));
+      });
+      body.push(h("details", { class: "more" }, [
+        h("summary", { text: m.poll_count + " morning poll"
+          + (m.poll_count === 1 ? "" : "s") + ", " + m.asked_count + " targeted ask"
+          + (m.asked_count === 1 ? "" : "s")
+          + (m.held_count ? ", " + m.held_count + " held for quiet hours" : "")
+          + ". Read the whole thread (" + m.messages.length + ")." }),
+        thread]));
+    } else {
+      body.push(h("p", { class: "small muted", style: "margin:var(--s3) 0 0",
+        text: "No messages yet. Play a step on the chief's board and they appear here." }));
+    }
+
+    return h("div", { class: "card" }, body);
+  }
+})();
+</script>
+</body>
+</html>

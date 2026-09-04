@@ -25,7 +25,6 @@ from turnout.models import (
     Certification,
     Department,
     Member,
-    MinCrew,
     ResponseStats,
     Role,
 )
@@ -53,7 +52,28 @@ def _phone(rng: random.Random, used: set[str]) -> str:
             return p
 
 
-def _profile(kind: str) -> dict[str, tuple[int, int]]:
+# Members of the same archetype are not clones. Two commuters both struggle on a weekday morning,
+# but one of them has a boss who lets him leave. Without this, the roster page shows eight identical
+# histories, which is not what a real department's year looks like.
+JITTER = (0, 2, -2, 1, -1, 3, -3, 2, -1, 1, -2, 0, 3, -3)
+
+
+def _profile(kind: str, index: int = 0) -> dict[str, tuple[int, int]]:
+    """Response history (yes, no) per window type by member archetype, jittered per member.
+
+    The jitter moves yes and no in opposite directions by at most three, so the archetype's total
+    number of calls is preserved and only that member's willingness moves.
+    """
+    base = _archetype(kind)
+    out = {}
+    for k, (yes, no) in base.items():
+        # sum of ordinals rather than hash(), which Python randomises per process.
+        d = JITTER[(index * 5 + sum(ord(c) for c in k) % 5) % len(JITTER)]
+        out[k] = (max(0, yes + d), max(0, no - d))
+    return out
+
+
+def _archetype(kind: str) -> dict[str, tuple[int, int]]:
     """Response history (yes, no) per window type by member archetype."""
     if kind == "retiree":
         return {"weekday_day": (28, 6), "weekday_evening": (20, 10), "weekday_night": (8, 14),
@@ -84,7 +104,7 @@ def make_members(rng: random.Random, dept: Department, n: int, used: set[str], a
         certs = [Certification(type="Firefighter I", expires=DEMO_START + timedelta(days=rng.randint(120, 700)))]
         if Role.EMT in roles:
             certs.append(Certification(type="EMT-B", expires=DEMO_START + timedelta(days=rng.randint(60, 700))))
-        stats = {k: ResponseStats(yes=y, no=nn) for k, (y, nn) in _profile(kind).items()}
+        stats = {k: ResponseStats(yes=y, no=nn) for k, (y, nn) in _profile(kind, i).items()}
         qh = (22, 6) if kind != "shift" else (8, 15)
         name = f"{FIRST[(name_offset + i) % len(FIRST)]} {LAST[(name_offset * 3 + i) % len(LAST)]}"
         members.append(Member(id=f"{dept.id}-m{i + 1:02d}", dept_id=dept.id, name=name, phone=_phone(rng, used),
@@ -173,6 +193,11 @@ def build() -> dict:
     for mid in ("millbrook-m06", "millbrook-m09"):
         by_id[mid].roles = sorted({Role.DRIVER_OPERATOR, Role.FIREFIGHTER})
         by_id[mid].response_stats["weekday_day"] = ResponseStats(yes=20, no=8)
+    # m06 is the strongest weekday-daytime driver on the roster, so Closer asks him first, and he is
+    # in quiet hours until 08:00, so the hook holds that message until then. Without the gap between
+    # him and m09 the choice is a coin toss and the held message, which is the point of the hook,
+    # may never appear on screen.
+    by_id["millbrook-m06"].response_stats["weekday_day"] = ResponseStats(yes=28, no=2)
     by_id["millbrook-m06"].quiet_hours = (22, 8)  # in quiet hours until 08:00, so the ask is held
     # m14 is a driver who can only do mornings ("morning only"), which covers 06-10 and makes the
     # 10-14 block the single critical window rather than one of three.
@@ -194,7 +219,6 @@ def build() -> dict:
         rb[mid].response_stats["weekday_day"] = ResponseStats(yes=30, no=4)
 
     # Cedar Hollow: thin on Thursday, everyone who is around is a commuter.
-    cb = {m.id: m for m in c_members}
     for m in c_members:
         if Role.DRIVER_OPERATOR in m.roles:
             m.response_stats["weekday_day"] = ResponseStats(yes=2, no=26)

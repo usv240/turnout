@@ -96,6 +96,19 @@ def get_network(x_api_key: str | None = Header(default=None)) -> dict:
     return service.network()
 
 
+@app.get("/api/crew", tags=["read"])
+def get_crew(x_api_key: str | None = Header(default=None)) -> dict:
+    """Every member, and everything the agent knows and has done about them.
+
+    A scheduling agent asks real people for hours of their life. This is the accountability side of
+    that: how often each member has been asked this week, the cap that stops it, the hours it will
+    not text them, every message it sent, and the response history behind the probability it uses
+    to choose. Nothing here is a model's opinion.
+    """
+    check_key(x_api_key)
+    return service.crew()
+
+
 @app.get("/api/trace", tags=["read"])
 def get_trace(since: int = Query(default=0),
               x_api_key: str | None = Header(default=None)) -> dict:

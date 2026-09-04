@@ -35,6 +35,9 @@ CLOSER = (
     "stop. 'still_waiting' means leave it alone. 'members_declined' means stop, Neighbor will take it from "
     "here. 'ask_again' means the gap is now short a different role, so call rank_candidates and send_ask once "
     "more. 'error' means you used a wrong id, so call list_gaps again.\n"
+    "Do not skip a candidate because in_quiet_hours is true. send_ask holds that message until their "
+    "quiet hours end and tells them it waited, so nobody is woken. Passing them over silently costs "
+    "them the chance to say yes, which is worse for them and for the gap.\n"
     "If a send is refused by policy, respect it and pick the next candidate. Never ask more than two members "
     "per gap per round. Be brief."
 )

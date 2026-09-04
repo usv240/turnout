@@ -137,9 +137,20 @@
     return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()] + " " + window.fmtTime(iso);
   };
 
+  /* A code block wide enough to scroll is a scrollable region, and a scrollable region that cannot
+     take focus cannot be read with a keyboard. axe reports it as serious, and it is. */
+  function makeCodeBlocksFocusable() {
+    Array.prototype.forEach.call(document.querySelectorAll("pre"), function (el) {
+      if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "0");
+      if (!el.hasAttribute("role")) el.setAttribute("role", "region");
+      if (!el.hasAttribute("aria-label")) el.setAttribute("aria-label", "Code block");
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     mountThemeToggle();
     mountInfoButtons();
+    makeCodeBlocksFocusable();
   });
   window.MountInfo = mountInfoButtons;
 })();
