@@ -79,6 +79,10 @@
       <li>At most <span id="lim-int">3</span> interruptions of the chief in a day, outside a live
         incident.</li>
     </ul>
+    <p class="small" style="margin:var(--s3) 0 0" id="memory-line">Every answer a member gives is
+      written to this department's own Amazon Bedrock AgentCore Memory, which is where the response
+      history sharpens from week to week without anyone retraining anything.
+      <button class="info" data-tip="agentcore_memory" data-label="AgentCore Memory"></button></p>
     <p class="small" style="margin:var(--s3) 0 0" id="prior-line">The prior on the response
       probability is 32 percent with a strength of 10 observations, from Predictive Dispatch of
       Volunteer First Responders, 2023. A member with no history is assumed to be about as likely to
@@ -159,6 +163,26 @@
     document.getElementById("dept-name").textContent = dept.name + ".";
     document.getElementById("lim-asks").textContent = dept.weekly_ask_limit;
     document.getElementById("lim-int").textContent = dept.chief_interrupt_budget;
+    var mem = d.memory || {};
+    var memLine = document.getElementById("memory-line");
+    if (mem.agentcore) {
+      memLine.textContent = mem.agentcore + " of these answers have been written to this "
+        + "department's own Amazon Bedrock AgentCore Memory this session"
+        + (mem.memory_id ? " (" + mem.memory_id + ")" : "")
+        + ". Riverton and Cedar Hollow each have their own, which is the same boundary the "
+        + "Agent-to-Agent protocol draws. The percentages below are still computed from the "
+        + "history already on this roster; Memory is where the answers accumulate across "
+        + "sessions, and every write is in the agent trace.";
+    } else if (mem.local) {
+      memLine.textContent = mem.local + " answers went to the local store this session"
+        + (mem.last_error ? ", because AgentCore said: " + mem.last_error
+                          : ", because AgentCore is switched off in this build")
+        + ". The history is the same either way, and this line says which one holds it.";
+    } else {
+      memLine.textContent = "No answers have been recorded yet this session. Play a step on the "
+        + "chief's board and each reply is written to this department's AgentCore Memory.";
+    }
+
     document.getElementById("prior-line").textContent =
       "The prior on the response probability is " + Math.round(d.prior.mean * 100)
       + " percent with a strength of " + d.prior.strength + " observations, from " + d.prior.source

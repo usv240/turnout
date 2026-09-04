@@ -232,10 +232,15 @@ class DemoService:
                                    if x["direction"] == "out" and x["purpose"] == "ask"),
                 "held_count": sum(1 for x in mine if x["held"]),
             })
+        from turnout.agentcore.memory import status as memory_status
+
         return {
             "department": {"name": d.name, "short_name": d.short_name,
                            "weekly_ask_limit": d.weekly_ask_limit,
                            "chief_interrupt_budget": DAILY_INTERRUPT_BUDGET},
+            # Counted, not claimed. Every answer a member gives is written to this department's own
+            # AgentCore Memory, and this says how many actually landed there.
+            "memory": memory_status("millbrook"),
             "prior": {"mean": 0.32, "strength": 10,
                       "source": "Predictive Dispatch of Volunteer First Responders, 2023"},
             "members": out,

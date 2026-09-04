@@ -76,14 +76,12 @@ department publishes an AgentCard and answers coverage questions about itself, a
 names where its numbers were computed, so this is checkable rather than a claim.
 
 | Service | Status | Use here |
-|---|---|
-| Code Interpreter | **live** | Every risk score runs there, using `engine/kernel.py`, the same dependency free file the local path imports. Identical results, and the card says which ran. |
-| Memory | **live** | One memory per department holding response history. `python -m turnout.agentcore.provision` creates them, because provisioning takes minutes and a chief should not wait. |
+|---|---|---|
+| Code Interpreter | **live** | Every risk score runs there, using `engine/kernel.py`, the same dependency free file the local path imports. Identical results, and the gap card says which one ran. |
+| Memory | **live** | One memory per department. Every answer a member gives is written to their own department's memory as it arrives, and `/crew.html` reports how many landed rather than claiming it. `python -m turnout.agentcore.provision` creates them ahead of time, because provisioning takes minutes and a chief should not wait. The probabilities in this build are still computed from the history on the roster; Memory is where they accumulate across sessions. |
 | Runtime | designed | One isolated runtime per department. The web tier is App Runner today. |
-
 | Gateway | designed | Roster, SMS, weather and NERIS as tools, with credentials out of agent code. |
 | Identity | designed | Scoped credentials to act for a department, and to prove identity to a peer. |
-
 | Observability | designed | The Trace tab reads the agents' own event stream today. |
 
 ## Run it
@@ -112,7 +110,7 @@ Model ids are configuration, never hard-coded. See `src/turnout/config.py`; over
 ## Tests
 
 ```bash
-pytest -q          # 128 tests
+pytest -q          # 130 tests
 ```
 
 The suite includes real A2A over HTTP between separate servers, including a test that asks a peer

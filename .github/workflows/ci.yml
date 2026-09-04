@@ -24,7 +24,7 @@ jobs:
       - name: Tests
         # Six tests drive a real model or stand up real A2A servers, so they need credentials this
         # workflow does not have. They are marked `aws` and deselected here rather than made to pass
-        # against a fake. The other 122 are deterministic and run on every push.
+        # against a fake. The other 124 are deterministic and run on every push.
         run: pytest -q -m "not aws"
 
   accessibility:

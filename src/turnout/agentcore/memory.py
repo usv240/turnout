@@ -150,12 +150,32 @@ def for_department(dept_id: str, region: str = "us-east-1") -> ResponseMemory:
     return _memories[dept_id]
 
 
+# What this process has actually written, per department, so a page can report it rather than
+# assert it. A claim about where data went is only worth making if the answer is on the screen.
+written: dict[str, dict] = {}
+
+
 def record_response(dept_id: str, member_id: str, window_type: str, said_yes: bool,
                     use_agentcore: bool = True) -> dict:
     """Record an answer in AgentCore Memory, or say why it went to the local store instead."""
+    stat = written.setdefault(dept_id, {"agentcore": 0, "local": 0, "memory_id": None,
+                                        "last_error": None})
     if not use_agentcore:
+        stat["local"] += 1
         return {"stored_in": "local"}
     try:
-        return for_department(dept_id).record(member_id, window_type, said_yes)
+        out = for_department(dept_id).record(member_id, window_type, said_yes)
+        stat["agentcore"] += 1
+        stat["memory_id"] = out.get("memory_id")
+        return out
     except Exception as exc:
-        return {"stored_in": "local_fallback", "reason": f"{type(exc).__name__}: {exc}"[:160]}
+        stat["local"] += 1
+        stat["last_error"] = f"{type(exc).__name__}: {exc}"[:160]
+        return {"stored_in": "local_fallback", "reason": stat["last_error"]}
+
+
+def status(dept_id: str) -> dict:
+    """Where this department's answers went, counted rather than claimed."""
+    stat = written.get(dept_id) or {"agentcore": 0, "local": 0, "memory_id": None,
+                                    "last_error": None}
+    return dict(stat)

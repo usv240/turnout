@@ -92,3 +92,38 @@ def test_the_risk_engine_reports_its_execution_location():
     # critical. What this test is for is the provenance, not the level.
     assert r.level in (Level.HIGH, Level.CRITICAL)
     assert r.p_understaffed == 1.0  # one firefighter can never make a crew of three
+
+
+def test_the_memory_status_counts_rather_than_claims():
+    """A claim about where data went is only worth making if the answer can be checked."""
+    from turnout.agentcore import memory
+
+    memory.written.clear()
+    assert memory.status("millbrook") == {"agentcore": 0, "local": 0, "memory_id": None,
+                                          "last_error": None}
+    memory.record_response("millbrook", "m01", "weekday_day", True, use_agentcore=False)
+    memory.record_response("millbrook", "m02", "weekday_day", False, use_agentcore=False)
+    s = memory.status("millbrook")
+    assert s["local"] == 2 and s["agentcore"] == 0
+    memory.written.clear()
+
+
+def test_a_memory_that_does_not_answer_falls_back_and_says_why():
+    """A managed service having a bad minute must degrade, not take the answer down with it."""
+    from turnout.agentcore import memory
+
+    memory.written.clear()
+
+    class Broken:
+        def record(self, *a, **k):
+            raise RuntimeError("no memory for millbrook yet")
+
+    memory._memories["millbrook"] = Broken()
+    try:
+        out = memory.record_response("millbrook", "m01", "weekday_day", True, use_agentcore=True)
+    finally:
+        memory._memories.pop("millbrook", None)
+    assert out["stored_in"] == "local_fallback"
+    assert "no memory for millbrook" in out["reason"]
+    assert memory.status("millbrook")["local"] == 1
+    memory.written.clear()

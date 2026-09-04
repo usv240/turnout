@@ -174,6 +174,21 @@ def _record(r, dept_id: str, member_id: str, start: datetime, end: datetime, sta
     r.emit("availability", member_id=member_id, window_start=start.isoformat(), window_end=end.isoformat(),
            status=status, source=source)
 
+    # The answer is also the unit the response probability is built from, so it goes to this
+    # department's own AgentCore Memory. That is where the history should sharpen from week to week
+    # without anyone retraining anything, and each department's memory is separate, which is the
+    # same boundary A2A draws. Best effort: if it does not answer, the local store already has the
+    # record and the trace says where it went.
+    if status in ("available", "partial", "unavailable"):
+        from turnout.agentcore.memory import record_response
+        from turnout.config import settings
+        from turnout.engine.risk import window_type
+
+        out = record_response(dept_id, member_id, window_type(start), status != "unavailable",
+                              use_agentcore=settings.use_agentcore)
+        r.emit("response_remembered", member_id=member_id, window_type=window_type(start),
+               said_yes=status != "unavailable", **out)
+
 
 def _handle_chief(text: str) -> dict:
     parsed = parse_reply(text)
