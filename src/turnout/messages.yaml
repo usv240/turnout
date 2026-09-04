@@ -26,6 +26,7 @@ decision: "{dept}: {day} {start}-{end} {district}: {level}.\n{explanation}.\n{re
 decision_multi: "{dept}: {day} needs you, {n} windows: {windows}.\n{worst_explanation}.\n{recommendation}.\nReply 1 approve all, 2 options, 3 leave open."
 decision_no_offer: "{dept}: {day} {start}-{end} {district}: {level}.\n{explanation}.\nNo neighbor can cover. This is the decision only you can make.\nReply 2 options, 3 leave open."
 approved: "{dept}: Done. {by} covers {day} {start}-{end} {district}. Members told. Reply UNDO within 10 min to cancel."
+partly_approved: "{dept}: {by} covers {day} {start}-{end} {district}. Still open: {open_windows}. Their agent did not confirm those, so nobody is promised for them. Reply 1 to try again, 3 to leave open."
 undone: "{dept}: Cancelled. {day} {start}-{end} {district} is open again."
 left_open: "{dept}: Left open. I will check again at {next_check}."
 options_header: "{dept}: Other options for {day} {start}-{end}:"

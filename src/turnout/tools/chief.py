@@ -14,7 +14,6 @@ from strands import tool
 from turnout.messaging import fmt_day, fmt_hour, render
 from turnout.models import Decision
 from turnout.tools.common import dept, now, rt
-from turnout.tools.coverage import _gap_summary
 from turnout.tools.peers import confirm_with_peer
 
 DAILY_INTERRUPT_BUDGET = 3
@@ -66,7 +65,7 @@ def send_decisions(reason: str = "scheduled") -> dict:
 
     budget = DAILY_INTERRUPT_BUDGET - interrupts_today()
     sent, deferred = [], []
-    for (day, peer), gaps in sorted(groups.items(), key=lambda kv: -max(g.risk_score for g in kv[1])):
+    for (_day, _peer), gaps in sorted(groups.items(), key=lambda kv: -max(g.risk_score for g in kv[1])):
         if budget <= 0:
             deferred.extend(g.id for g in gaps)
             continue
@@ -140,7 +139,22 @@ def apply_chief_reply(choice: str) -> dict:
                 peer_name = r.store.get_department(best.from_dept).short_name
         if not covered:
             return {"applied": False, "reason": "no offer to approve"}
-        r.sms.send(d.id, d.chief_phone, render("approved", by=peer_name, **_slots(covered[0])), "approved")
+        # A neighbour's agent can decline a confirmation, or its chief can be asked to approve it,
+        # even after it offered. If the chief taps once for two windows and only one is confirmed,
+        # saying "Done" would leave a critical window open with nobody knowing. Name what is still
+        # open in the same message.
+        still_open = [g for g in batch if g not in covered]
+        if still_open:
+            windows = ", ".join(f"{fmt_day(g.window_start)} {fmt_hour(g.window_start)}"
+                                f"-{fmt_hour(g.window_end)}" for g in still_open)
+            r.sms.send(d.id, d.chief_phone,
+                       render("partly_approved", by=peer_name, open_windows=windows,
+                              **_slots(covered[0])), "approved")
+            r.emit("partly_approved", covered=[g.id for g in covered],
+                   still_open=[g.id for g in still_open])
+        else:
+            r.sms.send(d.id, d.chief_phone,
+                       render("approved", by=peer_name, **_slots(covered[0])), "approved")
         told = set()
         for g in covered:
             for mid in g.asked_member_ids:
@@ -150,7 +164,8 @@ def apply_chief_reply(choice: str) -> dict:
                 if not m.opted_out:
                     r.sms.send(d.id, m.phone, render("covered", by=peer_name, **_slots(g)), "covered", member_id=mid)
                     told.add(mid)
-        action = f"approved {peer_name} for {len(covered)} window(s)"
+        action = (f"approved {peer_name} for {len(covered)} of {len(batch)} window(s)"
+                  if still_open else f"approved {peer_name} for {len(covered)} window(s)")
     elif choice.startswith("2"):
         lines = [f"Other options for {fmt_day(oldest.window_start)}:"]
         idx = "abcdef"

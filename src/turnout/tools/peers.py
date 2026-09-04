@@ -67,9 +67,28 @@ class A2APeer:
         return CoverageOffer.model_validate_json(extract_json(out))
 
     def confirm(self, conf: CoverageConfirm, req: CoverageRequest) -> dict:
+        """Confirm with the peer, and treat an unreadable answer as unknown rather than a decline.
+
+        The peer is an agent, so its reply can occasionally come back as prose instead of the JSON
+        its tool returned. A confirmation is the one exchange where guessing is expensive: reading a
+        garbled yes as a no leaves a window uncovered, and reading a garbled no as a yes promises a
+        crew that is not coming. So this asks once more, and if the second answer is also unreadable
+        it says so, which is what the chief's message then reports.
+        """
         payload = {"confirm": conf.model_dump(mode="json"), "request": req.model_dump(mode="json")}
-        out = self._send("COVERAGE_CONFIRM " + json.dumps(payload))
-        return json.loads(extract_json(out))
+        last = ""
+        for _ in range(2):
+            out = self._send("COVERAGE_CONFIRM " + json.dumps(payload))
+            try:
+                result = json.loads(extract_json(out))
+            except (ValueError, TypeError):
+                last = str(out)[:160]
+                continue
+            if isinstance(result, dict) and "accepted" in result:
+                return result
+            last = str(out)[:160]
+        return {"accepted": False, "unreadable": True,
+                "note": f"{self.dept_id} did not give a readable answer: {last}"}
 
 
 def _peer(peer_id: str):
@@ -78,10 +97,7 @@ def _peer(peer_id: str):
         return r.peers[peer_id]
     d = dept()
     url = d.peer_urls.get(peer_id)
-    if url and r.use_a2a:
-        p = A2APeer(peer_id, url)
-    else:
-        p = LocalPeer(peer_id)
+    p = A2APeer(peer_id, url) if url and r.use_a2a else LocalPeer(peer_id)
     r.peers[peer_id] = p
     return p
 
@@ -108,7 +124,8 @@ def request_coverage_from_peers(gap_id: str) -> dict:
     g.request_id = req.request_id
     g.status = "asking_neighbors"
     r.store.put_gap(g)
-    r.emit("a2a_request", request_id=req.request_id, peers=d.peers, window=f"{g.window_start:%a %H:%M}-{g.window_end:%H:%M}")
+    r.emit("a2a_request", request_id=req.request_id, peers=d.peers,
+           window=f"{g.window_start:%a %H:%M}-{g.window_end:%H:%M}")
 
     scored = []
     offers: list[CoverageOffer] = []

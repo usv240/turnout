@@ -34,7 +34,7 @@ def fmt_hour(dt: datetime) -> str:
 def render(key: str, **slots: object) -> str:
     text = templates()[key].format(**slots)
     limit = CHIEF_MAX if key in {"decision", "decision_multi", "decision_no_offer", "escalation", "status",
-                                 "weekly", "options_header"} else MEMBER_MAX
+                                 "weekly", "options_header", "partly_approved"} else MEMBER_MAX
     if len(text) > limit:
         raise ValueError(f"message '{key}' is {len(text)} chars, limit {limit}: {text!r}")
     return text

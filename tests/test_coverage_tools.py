@@ -90,8 +90,12 @@ def test_closer_candidates_exclude_everyone_who_already_answered(rt):
     _polled(rt)
     cands = rank_candidates(THU10)
     ids = [c["member_id"] for c in cands]
-    assert ids[0] == "millbrook-m12"  # highest predicted yes for a weekday daytime window
-    assert "millbrook-m06" in ids and "millbrook-m09" in ids
+    assert ids[0] == "millbrook-m06"  # highest predicted yes for a weekday daytime window
+    assert "millbrook-m12" in ids and "millbrook-m09" in ids
+    # Ranking is by predicted yes alone. Being in quiet hours is reported, not used to skip someone,
+    # because the hook holds the message rather than the roster quietly passing them over.
+    assert [c["probability"] for c in cands] == sorted((c["probability"] for c in cands), reverse=True)
+    assert next(c for c in cands if c["member_id"] == "millbrook-m06")["in_quiet_hours"] is True
     assert "millbrook-m03" not in ids  # said yes
     assert "millbrook-m08" not in ids  # said no
     assert "millbrook-m13" not in ids  # free text, read as no by the model
@@ -187,6 +191,40 @@ def test_one_approval_covers_both_windows_and_moves_the_ledger(rt):
     assert rt.store.ledger_balance("riverton", "millbrook") == pytest.approx(-7.0)
 
 
+def test_a_window_the_peer_would_not_confirm_is_named_in_the_same_text(rt):
+    """The chief taps once for two windows. If only one is confirmed, saying "Done" would leave a
+    critical window open with nobody knowing it. So the reply names what is still open."""
+    from turnout.tools import chief as chief_mod
+
+    _polled(rt)
+    for gid in (THU10, THU14):
+        g = rt.store.get_gap("millbrook", gid)
+        g.status = "members_declined"
+        rt.store.put_gap(g)
+        request_coverage_from_peers(gid)
+    send_decisions()
+
+    real = chief_mod.confirm_with_peer
+
+    def only_the_afternoon(gap_id, peer_id):
+        if gap_id == THU10:
+            return {"accepted": False, "unreadable": True, "note": "no readable answer"}
+        return real(gap_id, peer_id)
+
+    chief_mod.confirm_with_peer = only_the_afternoon
+    try:
+        d = rt.store.get_department("millbrook")
+        handle_inbound(d.chief_phone, "1")
+    finally:
+        chief_mod.confirm_with_peer = real
+
+    assert rt.store.get_gap("millbrook", THU14).covered_by == "riverton"
+    assert rt.store.get_gap("millbrook", THU10).covered_by is None
+    body = rt.store.list_messages("millbrook", d.chief_phone)[-1].body
+    assert "Still open" in body and "10a-2p" in body
+    assert "Done." not in body
+
+
 def test_interrupt_budget_defers_the_overflow(rt):
     _polled(rt)
     d = rt.store.get_department("millbrook")
@@ -209,6 +247,7 @@ def test_stop_is_honored(rt):
     assert "opted out" in rt.store.list_messages("millbrook", m.phone)[-1].body
 
 
+@pytest.mark.aws
 def test_free_text_reply_is_escalated_to_the_model(rt):
     """m13 replies with prose the rule parser cannot read, so it goes to the model."""
     _polled(rt)
