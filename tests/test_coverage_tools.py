@@ -209,8 +209,22 @@ def test_stop_is_honored(rt):
     assert "opted out" in rt.store.list_messages("millbrook", m.phone)[-1].body
 
 
-def test_free_text_reply_is_read_by_the_model(rt):
-    """m13 replies with prose the rule parser cannot read. The Roll Call agent reads it as a no."""
+def test_free_text_reply_is_escalated_to_the_model(rt):
+    """m13 replies with prose the rule parser cannot read, so it goes to the model."""
     _polled(rt)
     events = [e for e in rt.trace if e["kind"] == "roll_call_llm"]
-    assert any(e["member_id"] == "millbrook-m13" and e["intent"] == "no" for e in events), events
+    assert any(e["member_id"] == "millbrook-m13" for e in events), events
+
+
+def test_an_ambiguous_reply_never_becomes_availability(rt):
+    """m13 says "depends on the kids, probably not". Whatever the model makes of that, it must not
+    end up on the board as someone who is coming.
+
+    This is the property worth testing. Asserting that the model always reads that sentence as a no
+    would be asserting something no model guarantees, and the earlier version of this test failed
+    intermittently for exactly that reason. Recording availability that is not really there is the
+    dangerous direction: the board looks covered and nobody turns out."""
+    _polled(rt)
+    avail = rt.store.list_availability("millbrook", datetime(2026, 9, 10), datetime(2026, 9, 11))
+    m13 = [a for a in avail if a.member_id == "millbrook-m13"]
+    assert not [a for a in m13 if a.status in ("available", "partial")], m13

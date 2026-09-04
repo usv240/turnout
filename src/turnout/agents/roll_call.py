@@ -44,6 +44,12 @@ def _last_outbound(r, dept_id: str, phone: str) -> Message | None:
     return msgs[-1] if msgs else None
 
 
+MODEL_TRUST = 0.75
+"""How sure the model must be before its reading of a free-text reply counts as
+availability. Below this the member is asked again and nothing is recorded, because an
+availability that is not really there is worse than an extra text."""
+
+
 def _window_for(r, dept_id: str, member_id: str, purpose: str) -> tuple[datetime, datetime] | None:
     """The window the member's reply refers to: the pending poll window, or the gap they were asked about."""
     now = r.clock.now()
@@ -84,7 +90,21 @@ def handle_inbound(from_phone: str, text: str, at: datetime | None = None) -> di
         desc = f"{window[0]:%A} {window[0]:%H:%M}-{window[1]:%H:%M}"
         try:
             parsed = roll_call_llm(text, desc, purpose)
-            r.emit("roll_call_llm", member_id=m.id, text=text, intent=parsed.intent, confidence=parsed.confidence)
+            r.emit("roll_call_llm", member_id=m.id, text=text, intent=parsed.intent,
+                   confidence=parsed.confidence)
+            # A model reading of a sentence like "depends on the kids, probably not" must clear a
+            # bar before it becomes availability. Recording someone as available when they did not
+            # clearly say yes is the dangerous direction: the board looks covered and nobody comes.
+            # Below the bar, ask plainly and record nothing.
+            if parsed.intent in ("yes", "partial") and parsed.confidence < MODEL_TRUST:
+                r.emit("roll_call_low_confidence", member_id=m.id, text=text,
+                       intent=parsed.intent, confidence=parsed.confidence,
+                       action="asked again, nothing recorded")
+                r.sms.send(d.id, m.phone,
+                           render("clarify_plain", dept=d.short_name, day=fmt_day(window[0]),
+                                  start=fmt_hour(window[0]), end=fmt_hour(window[1])),
+                           "clarify", member_id=m.id)
+                return {"handled": True, "intent": "unclear", "confidence": parsed.confidence}
         except Exception as e:
             r.emit("roll_call_llm_error", member_id=m.id, error=str(e)[:200])
 
