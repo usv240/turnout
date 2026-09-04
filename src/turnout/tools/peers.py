@@ -12,6 +12,7 @@ from datetime import timedelta
 from strands import tool
 
 from turnout import runtime
+from turnout.a2a.client import extract_json
 from turnout.engine.offers import rank_offers, score_offer
 from turnout.models import CoverageConfirm, CoverageOffer, CoverageRequest
 from turnout.tools.common import dept, now, rt
@@ -19,7 +20,11 @@ from turnout.tools.coverage import _gap_summary
 
 
 class LocalPeer:
-    """A peer department in the same process. Switches the runtime's active department to answer."""
+    """A peer department in the same process, used by the single-command local demo.
+
+    Answers with the peer's own department id set, so the peer reasons about its own coverage using
+    its own data. The A2A path is the real one; this keeps the demo to one command.
+    """
 
     def __init__(self, dept_id: str) -> None:
         self.dept_id = dept_id
@@ -29,19 +34,19 @@ class LocalPeer:
         me = r.dept_id
         r.dept_id = self.dept_id
         try:
-            return fn()
+            return fn(r)
         finally:
             r.dept_id = me
 
     def ask(self, req: CoverageRequest) -> CoverageOffer:
         from turnout.agents.peer_service import evaluate_request
 
-        return self._as_peer(lambda: evaluate_request(req))
+        return self._as_peer(lambda r: evaluate_request(req, rt=r))
 
     def confirm(self, conf: CoverageConfirm, req: CoverageRequest) -> dict:
         from turnout.agents.peer_service import apply_confirm
 
-        return self._as_peer(lambda: apply_confirm(conf, req))
+        return self._as_peer(lambda r: apply_confirm(conf, req, rt=r))
 
 
 class A2APeer:
@@ -59,18 +64,12 @@ class A2APeer:
 
     def ask(self, req: CoverageRequest) -> CoverageOffer:
         out = self._send("COVERAGE_REQUEST " + req.model_dump_json())
-        return CoverageOffer.model_validate_json(_extract_json(out))
+        return CoverageOffer.model_validate_json(extract_json(out))
 
     def confirm(self, conf: CoverageConfirm, req: CoverageRequest) -> dict:
         payload = {"confirm": conf.model_dump(mode="json"), "request": req.model_dump(mode="json")}
         out = self._send("COVERAGE_CONFIRM " + json.dumps(payload))
-        return json.loads(_extract_json(out))
-
-
-def _extract_json(text: str) -> str:
-    s = text.find("{")
-    e = text.rfind("}")
-    return text[s:e + 1] if s >= 0 and e > s else text
+        return json.loads(extract_json(out))
 
 
 def _peer(peer_id: str):
@@ -79,7 +78,7 @@ def _peer(peer_id: str):
         return r.peers[peer_id]
     d = dept()
     url = d.peer_urls.get(peer_id)
-    if url and not r.settings.is_local:
+    if url and r.use_a2a:
         p = A2APeer(peer_id, url)
     else:
         p = LocalPeer(peer_id)
@@ -117,9 +116,10 @@ def request_coverage_from_peers(gap_id: str) -> dict:
     for peer_id in d.peers:
         try:
             offer = _peer(peer_id).ask(req)
-        except Exception as e:  # a peer that is down is a decline with a reason
+        except Exception as e:  # a peer that is down or unintelligible is a decline with a reason
+            r.emit("a2a_error", peer=peer_id, error=f"{type(e).__name__}: {e}"[:300])
             offer = CoverageOffer(request_id=req.request_id, from_dept=peer_id, can_cover=False,
-                                  reason_if_declined=f"no answer from {peer_id}: {type(e).__name__}")
+                                  reason_if_declined=f"no usable answer from {peer_id}")
         offers.append(offer)
         balance_after = r.store.ledger_balance(d.id, peer_id) + (hours if offer.can_cover else 0)
         scored.append(score_offer(offer, balance_after, offer.peer_current_risk, d.max_offer_delay_min))

@@ -15,7 +15,7 @@ from turnout import runtime
 from turnout.agents import prompts
 from turnout.agents.hooks import hooks_for
 from turnout.agents.models import fast_model, reasoning_model
-from turnout.agents.peer_service import apply_coverage_confirm, evaluate_coverage_request
+from turnout.agents.peer_service import make_peer_tools
 from turnout.models import ParsedReply
 from turnout.tools.certs import find_expiring_certs, propose_training
 from turnout.tools.chief import send_decisions, send_status
@@ -27,6 +27,9 @@ from turnout.tools.peers import request_coverage_from_peers
 from turnout.tools.roster import get_department, get_member_response_probability, list_members
 from turnout.tools.sms import send_member_sms
 from turnout.tools.weather import get_weather_alerts
+
+
+NL2 = chr(10) * 2  # blank line between the preamble and the agent's own prompt
 
 
 def _pre() -> str:
@@ -76,12 +79,19 @@ def cert_clock_agent() -> Agent:
                  callback_handler=None)
 
 
-def coverage_peer_agent() -> Agent:
-    """The agent a neighboring department talks to over A2A."""
-    return Agent(name="Coverage", description="Answers mutual aid coverage requests from neighboring departments.",
-                 model=fast_model(), system_prompt=_pre() + "\n\n" + prompts.COVERAGE_PEER,
-                 tools=[evaluate_coverage_request, apply_coverage_confirm], hooks=hooks_for("Coverage"),
-                 callback_handler=None)
+def coverage_peer_agent(rt=None) -> Agent:
+    """The agent a neighbouring department talks to over A2A.
+
+    Its tools are bound to one department's runtime, so two departments served from the same process
+    never read each other's data.
+    """
+    rt = rt or runtime.get()
+    d = rt.store.get_department(rt.dept_id)
+    pre = prompts.preamble(d, rt.clock.now().strftime("%A %Y-%m-%d %H:%M"))
+    return Agent(name="Coverage",
+                 description="Answers mutual aid coverage requests from neighbouring departments.",
+                 model=fast_model(), system_prompt=pre + NL2 + prompts.COVERAGE_PEER,
+                 tools=make_peer_tools(rt), hooks=hooks_for("Coverage"), callback_handler=None)
 
 
 def roll_call_parse(text: str, window_desc: str, purpose: str) -> ParsedReply:

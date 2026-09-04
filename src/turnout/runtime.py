@@ -26,6 +26,9 @@ class Runtime:
     neris: Any  # channels.neris.NerisClient
     settings: Settings = field(default_factory=lambda: default_settings)
     dept_id: str = ""  # the department this process serves
+    use_a2a: bool = False
+    """Talk to peers over the Agent-to-Agent protocol. False runs peers in-process, which is what the
+    single-command local demo does. Deployments and the A2A tests set this to True."""
     peers: dict[str, Any] = field(default_factory=dict)  # dept_id -> A2A client or in-process peer
     listeners: list[EventListener] = field(default_factory=list)
     trace: list[dict[str, Any]] = field(default_factory=list)
