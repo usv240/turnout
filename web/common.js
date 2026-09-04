@@ -15,7 +15,7 @@
       b.setAttribute("aria-pressed", String(b.dataset.mode === mode));
     });
   }
-  window.TurnoutTheme = { apply: apply, current: function () { return stored() || "system"; } };
+  window.ThemeControl = { apply: apply, current: function () { return stored() || "system"; } };
 
   function mountThemeToggle() {
     document.querySelectorAll(".theme-toggle").forEach(function (host) {
@@ -115,7 +115,7 @@
       "aria-label": "More about " + (label || key), "aria-expanded": "false", type: "button", text: "i" });
   };
 
-  window.SHAPES = { critical: "⬣", high: "◆", elevated: "▲", low: "●", covered: "✔" };
+  window.SHAPES = { critical: "⬣", high: "◆", elevated: "▲", low: "●", covered: "■" };
 
   window.levelBadge = function (level, word) {
     return window.h("span", { class: "badge " + level }, [
@@ -139,5 +139,5 @@
     mountThemeToggle();
     mountInfoButtons();
   });
-  window.TurnoutMountInfo = mountInfoButtons;
+  window.MountInfo = mountInfoButtons;
 })();

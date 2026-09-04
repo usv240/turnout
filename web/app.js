@@ -60,7 +60,7 @@
         type: "button",
         disabled: s.done || busy ? "" : null,
         onclick: function () { runStep(s.id, s.detail); }
-      }, [s.done ? "✓ " + s.title : s.title]);
+      }, [s.done ? "Done: " + s.title : s.title]);
       if (s.done) b.disabled = true;
       host.appendChild(b);
     });
@@ -161,7 +161,7 @@
       card.appendChild(det);
       host.appendChild(card);
     });
-    window.TurnoutMountInfo();
+    window.MountInfo();
   }
 
   function bubble(m) {
@@ -305,7 +305,7 @@
               : l.peer_name + " owes Millbrook " + Math.abs(l.balance_hours) + " hours") }));
       });
       host.appendChild(led);
-      window.TurnoutMountInfo();
+      window.MountInfo();
     });
   }
 
@@ -403,7 +403,7 @@
       }
       host.appendChild(card);
     });
-    window.TurnoutMountInfo();
+    window.MountInfo();
   }
 
   function renderAll() {
