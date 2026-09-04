@@ -197,7 +197,8 @@ servers on 9002 and 9003. See `docker-entrypoint.sh`.
 
 Start at the deployed URL, or `http://localhost:8000` after the two commands above.
 
-- **Play the week** on the demo page. Five steps, no login.
+- **Play the week** on the demo page. Five steps, no login, or press Play the rest of the week and
+  watch it run itself.
 - **Station board** shows each gap with its explanation. Expand "Show the numbers behind this" for
   the actual inputs and the formula.
 - **Phones** shows both sides of every text. The reply buttons go through the same inbound path a

@@ -66,7 +66,10 @@ shows the agent doing its own job first and only escalating what it genuinely ca
 ## 3. Judge walkthrough, about four minutes
 
 1. Open the live URL. Read the hero, then press **Open the live demo**.
-2. Press the five steps in order. Each takes 10 to 40 seconds, because real agents are running.
+2. Press the five steps in order, or press **Play the rest of the week** and watch it run itself.
+   Each step takes 10 to 40 seconds, because real agents are running. A step that is not next is
+   disabled: asking the neighbours before the coverage pass would send a request about a gap
+   nothing has found yet.
 3. **Station board**: each gap has a plain-language explanation. Expand *Show the numbers behind
    this* for expected calls, the weather multiplier, the probability nobody qualified responds, the
    time-critical weighting, how many days of history it used, and the formula with the numbers
