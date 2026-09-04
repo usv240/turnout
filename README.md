@@ -105,7 +105,7 @@ Model ids are configuration, never hard-coded. See `src/turnout/config.py`; over
 ## Tests
 
 ```bash
-pytest -q          # 91 tests
+pytest -q          # 111 tests
 ```
 
 The suite includes real A2A over HTTP between separate servers, including a test that asks a peer
@@ -115,11 +115,13 @@ for its roster and asserts no roster comes back.
 |---|---|
 | Risk engine | Hand-computed fixtures, monotonicity (more members never raises risk, a hazard never lowers it), every level boundary |
 | Crew feasibility | Exact bipartite matching, including one person who is both driver and firefighter not filling two slots |
-| Reply parsing | 40 phrasings of yes, no, partial windows, STOP, HELP and chief decisions |
+| Reply parsing | 82 phrasings of yes, no, partial windows, STOP, HELP and chief decisions, measured in docs/EVAL.md |
 | Message templates | Every template is length-checked so no text splits across two messages |
 | Policy hooks | Quiet hours and weekly ask limits provably block a send |
 | A2A | AgentCard discovery, an offer, a decline with its reason, roster isolation, and a full negotiation |
 | Coverage flow | Gap detected, closed by a member, closed by a neighbour, batched into one interrupt |
+| Onboarding | Group text and spreadsheet pastes, phone formats, duplicates, and that a pasted roster can actually make a crew |
+| Scoring endpoint | Unknown roles and weather refused with the list it knows, and more people never raising the score |
 
 ## Bring your own data
 
