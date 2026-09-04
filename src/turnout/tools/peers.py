@@ -160,7 +160,7 @@ def confirm_with_peer(gap_id: str, peer_id: str) -> dict:
         g.status = "covered"
         g.covered_by = peer_id
         g.confirmed_at = now()
-        g.resolution = f"covered by {peer_id}, {result.get('note', '')}".strip()
+        g.resolution = str(result.get("note", "")).strip()
         r.store.put_gap(g)
         r.emit("gap_covered", gap_id=gap_id, by=peer_id, auto_approved=result.get("auto_approved"))
     return result

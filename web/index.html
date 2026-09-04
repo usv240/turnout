@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turnout: make sure someone is coming</title>
+<meta name="description" content="A background agent for volunteer fire and EMS departments. It finds the hours when nobody can respond, fills them by asking the right people and the right neighbours, and interrupts the chief only for the one decision that needs a human.">
+<script>
+  /* Set the theme before first paint so there is no flash of the wrong one. */
+  (function () {
+    try {
+      var m = localStorage.getItem("turnout-theme");
+      if (m && m !== "system") document.documentElement.setAttribute("data-theme", m);
+    } catch (e) {}
+  })();
+</script>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23B3261E'/></svg>">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site">
+  <div class="bar">
+    <a class="brand" href="index.html"><span class="mark" aria-hidden="true"></span> Turnout</a>
+    <nav aria-label="Main">
+      <a href="#problem">The problem</a>
+      <a href="#how">How it works</a>
+      <a href="#different">What is different</a>
+      <a href="#built">How it is built</a>
+      <a href="#judges">For judges</a>
+      <a href="#developers">For developers</a>
+    </nav>
+    <div class="header-actions">
+      <div class="theme-toggle"></div>
+      <a class="btn primary" href="app.html">Open the live demo</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- 1. Hero -->
+<section class="hero">
+  <div class="wrap">
+    <h1>Every other tool tells the chief who is coming. Turnout makes sure someone is.</h1>
+    <p class="lede">
+      A background agent for volunteer fire and EMS departments. It finds the hours when nobody can
+      respond, fills them by asking the right people and the right neighbours, and interrupts the
+      chief only for the one decision that needs a human.
+    </p>
+    <div class="btn-row">
+      <a class="btn primary" href="app.html">Open the live demo</a>
+      <a class="btn" href="#how">See how it works</a>
+    </div>
+    <p class="credibility">
+      <span>4.5 million Americans live more than 25 minutes from an ambulance<button class="info" data-tip="ambulance_desert" data-label="ambulance deserts"></button></span>
+      <span>Built on peer-reviewed volunteer response research<button class="info" data-tip="p_understaffed" data-label="the response model"></button></span>
+      <span>Runs on Amazon Bedrock AgentCore<button class="info" data-tip="agentcore_runtime" data-label="AgentCore Runtime"></button></span>
+    </p>
+  </div>
+</section>
+
+<!-- 2. The problem -->
+<section class="band" id="problem">
+  <div class="wrap stack">
+    <h2>The station is not empty. It is empty at 2pm on a Tuesday.</h2>
+    <p class="section-lede">
+      Two thirds of America's firefighters are volunteers, and most rural ambulances are staffed by
+      volunteers too. They have day jobs, often 30 miles from the station. The roster looks fine on
+      paper and is empty in the middle of the workday. The chief finds out when the tone drops and
+      nobody answers.
+    </p>
+
+    <div class="grid cols-3">
+      <div class="card">
+        <span class="stat">35-year low</span>
+        <span class="stat-label">Volunteer numbers</span>
+        <p class="muted small">Volunteer firefighter numbers hit a 35 year low while call volume more
+        than tripled over the same period.<br><a href="#refs">Reference 1</a></p>
+      </div>
+      <div class="card">
+        <span class="stat">13 vs 6 minutes</span>
+        <span class="stat-label">Rural response time</span>
+        <p class="muted small">Median rural EMS response is 13 minutes against 6 in cities and
+        suburbs, across 1.8 million runs.<br><a href="#refs">Reference 3</a></p>
+      </div>
+      <div class="card">
+        <span class="stat">5 to 12% a minute</span>
+        <span class="stat-label">What the delay costs</span>
+        <p class="muted small">Survival from cardiac arrest falls by that much for every minute of
+        delay in response.<br><a href="#refs">Reference 4</a></p>
+      </div>
+    </div>
+
+    <p class="quote">
+      Chief Dana Ortiz runs Millbrook Volunteer Fire Company and a hardware store. On Wednesday night
+      she will send the same text to 14 people, call two neighbouring chiefs, and still not know who
+      is covering Thursday morning.
+    </p>
+
+    <p>
+      Mutual aid<button class="info" data-tip="mutual_aid" data-label="mutual aid"></button>,
+      the practice of neighbouring departments covering for each other, is how the gap gets filled
+      today. It is arranged by phone, and it lands unevenly: some departments quietly become hubs
+      that everyone leans on, and those hubs burn out. <a href="#refs">Reference 8</a>
+    </p>
+  </div>
+</section>
+
+<!-- 3. How it works -->
+<section class="band" id="how">
+  <div class="wrap stack">
+    <h2>The chief keeps every decision. The agent does the chasing.</h2>
+
+    <div class="steps">
+      <div class="step">
+        <h3>Roll call by text<button class="info" data-tip="agent_rollcall" data-label="the Roll Call agent"></button></h3>
+        <p>Each morning, one message per volunteer: "Around Thu 8a to 5p? Y or N." No app to install,
+        one character to reply. It reads "till 2" just fine.</p>
+      </div>
+      <div class="step">
+        <h3>It sees the hole before it hurts<button class="info" data-tip="risk_score" data-label="the risk score"></button></h3>
+        <p>The agent forecasts which uncovered hours are dangerous using the department's own call
+        history, who is likely to actually respond, and the weather. Every number is shown.</p>
+      </div>
+      <div class="step">
+        <h3>It closes it, then calls the neighbours<button class="info" data-tip="a2a" data-label="the A2A protocol"></button></h3>
+        <p>First it asks the members most likely to say yes. If that is not enough, its agent talks
+        directly to the neighbouring departments' agents.</p>
+      </div>
+      <div class="step">
+        <h3>One text to the chief<button class="info" data-tip="interrupt_budget" data-label="the interrupt budget"></button></h3>
+        <p>"Thursday 10 to 2: critical. Riverton can cover, 9 minute delay. Approve?" One tap.
+        Nothing is confirmed with a neighbour until she answers.</p>
+      </div>
+    </div>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>After the call, the report writes itself<button class="info" data-tip="neris" data-label="NERIS"></button></h3>
+        <p class="muted">A 30 second voice note in the truck becomes a draft NERIS incident report,
+        with the fields it was unsure about flagged rather than guessed. The chief reviews and submits.</p>
+      </div>
+      <div class="card">
+        <h3>Nobody's certification lapses<button class="info" data-tip="agent_certclock" data-label="the Cert Clock agent"></button></h3>
+        <p class="muted">Most states require about 24 hours of training a year to keep a
+        certification current. A lapsed card takes a member off the roster, so the agent books the
+        refresher months ahead.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. See it happen -->
+<section class="band" id="demo">
+  <div class="wrap stack">
+    <h2>Play the week.</h2>
+    <p class="section-lede">
+      You are Chief Ortiz on Wednesday morning. Press the steps in order and watch the board, the
+      phones, and the negotiation with the next town. No login, nothing to install.
+      <button class="info" data-tip="judge_mode" data-label="judge mode"></button>
+    </p>
+    <div class="btn-row">
+      <a class="btn primary" href="app.html">Open the live demo</a>
+      <a class="btn" href="app.html#trace">Go straight to the agent trace</a>
+    </div>
+    <p class="small muted">
+      Millbrook, Riverton and Cedar Hollow are fictional departments and every record is synthetic.
+      <button class="info" data-tip="synthetic" data-label="the synthetic data"></button>
+    </p>
+  </div>
+</section>
+
+<!-- 5. What makes it different -->
+<section class="band" id="different">
+  <div class="wrap stack">
+    <h2>Three things a scheduling app does not do.</h2>
+
+    <div class="grid cols-3">
+      <div class="card">
+        <h3>Agents that are good neighbours to each other</h3>
+        <p class="muted">Each department runs its own agent. When Millbrook cannot cover a window, its
+        agent asks Riverton's agent and Cedar Hollow's agent directly, over an open protocol, and a
+        shared ledger<button class="info" data-tip="ledger" data-label="the mutual aid ledger"></button>
+        keeps the network fair across a season. A neighbour can answer a coverage question. It can
+        never read our roster.</p>
+      </div>
+      <div class="card">
+        <h3>A risk engine you can read</h3>
+        <p class="muted">Not "the AI considered the weather". Real numbers from the department's own
+        call history, published response-probability research, and live weather alerts, shown on
+        every gap and computed as code<button class="info" data-tip="agentcore_code" data-label="Code Interpreter"></button>
+        rather than asserted by a model.</p>
+      </div>
+      <div class="card">
+        <h3>No app for volunteers</h3>
+        <p class="muted">A phone number works on every phone, for every member, with zero setup. The
+        chief gets a dashboard. Everyone else gets a text, at most one a day, never during their
+        quiet hours<button class="info" data-tip="quiet_hours" data-label="quiet hours"></button>.</p>
+      </div>
+    </div>
+
+    <h3>What about the tools that already exist?</h3>
+    <div class="scroll-x">
+      <table class="plain">
+        <thead>
+          <tr><th>Tool</th><th>What it does well</th><th>What it does not do</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>IamResponding</td>
+            <td>Shows who is responding after a page, plus scheduling and expiry tracking.</td>
+            <td>It shows the roster after the tone drops. It does not find the gap the day before, or fill it.</td>
+          </tr>
+          <tr>
+            <td>First Due AI scheduling</td>
+            <td>Predictive staffing for a single department, aimed at agencies with a budget.</td>
+            <td>One department at a time. No negotiation with the next town, and no workflow that runs on a plain phone.</td>
+          </tr>
+          <tr>
+            <td>Aladtec, Vector, ImageTrend</td>
+            <td>Career department scheduling, overtime rules and records.</td>
+            <td>Built around paid shifts, not around whether a volunteer can leave work on Thursday.</td>
+          </tr>
+          <tr>
+            <td>A group text</td>
+            <td>What most volunteer chiefs actually use today.</td>
+            <td>Everything. This is the job Turnout takes off the chief.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 6. Built on Strands and AgentCore -->
+<section class="band" id="built">
+  <div class="wrap stack">
+    <h2>Seven agents, three departments, one open protocol.</h2>
+    <p class="section-lede">
+      Each department runs the same agent code with its own configuration, its own memory, and its
+      own published AgentCard<button class="info" data-tip="agentcard" data-label="the AgentCard"></button>.
+      Inside a department the work is a Strands Graph<button class="info" data-tip="strands_graph" data-label="the Strands Graph"></button>,
+      because a safety workflow has to be deterministic and auditable.
+    </p>
+
+    <div class="card">
+      <img src="architecture.svg" alt="Architecture diagram. Inside Millbrook, a Strands Graph runs Watch, then Closer, then Neighbor, then Chief Gate, with Scribe and Cert Clock as separate jobs. Neighbor talks over the Agent-to-Agent protocol to Riverton and Cedar Hollow, which run the same agent code in their own AgentCore runtimes. All agents use AgentCore Memory, Gateway, Identity, Code Interpreter and Observability, and reach members and the chief by text message." style="width:100%;height:auto">
+    </div>
+
+    <div class="grid cols-4">
+      <div class="card"><h3>Runtime<button class="info" data-tip="agentcore_runtime" data-label="AgentCore Runtime"></button></h3><p class="muted small">One isolated runtime per department, with sessions that stay open while the agent waits for replies.</p></div>
+      <div class="card"><h3>Memory<button class="info" data-tip="agentcore_memory" data-label="AgentCore Memory"></button></h3><p class="muted small">Who says yes to which windows, and how this chief likes decisions phrased.</p></div>
+      <div class="card"><h3>Gateway<button class="info" data-tip="agentcore_gateway" data-label="AgentCore Gateway"></button></h3><p class="muted small">Roster, texting, weather and NERIS as tools, with credentials out of agent code.</p></div>
+      <div class="card"><h3>Identity<button class="info" data-tip="agentcore_identity" data-label="AgentCore Identity"></button></h3><p class="muted small">Scoped credentials to act for a department, and to prove who you are to a neighbour.</p></div>
+      <div class="card"><h3>Code Interpreter<button class="info" data-tip="agentcore_code" data-label="Code Interpreter"></button></h3><p class="muted small">The risk engine and crew matching run as real Python, with inputs and outputs recorded.</p></div>
+      <div class="card"><h3>Observability<button class="info" data-tip="agentcore_observability" data-label="AgentCore Observability"></button></h3><p class="muted small">Every step is a trace, which is what the Trace tab in the demo reads.</p></div>
+      <div class="card"><h3>Hooks<button class="info" data-tip="hooks" data-label="Strands hooks"></button></h3><p class="muted small">Quiet hours and the weekly ask limit are enforced in code, not by a prompt.</p></div>
+      <div class="card"><h3>A2A<button class="info" data-tip="a2a" data-label="the A2A protocol"></button></h3><p class="muted small">The open standard that lets one department's agent ask another's for help.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. For judges -->
+<section class="band" id="judges">
+  <div class="wrap stack">
+    <h2>For judges.</h2>
+    <p class="section-lede">Everything the rubric asks for, in rubric order, each linked to the evidence.</p>
+    <div class="scroll-x">
+      <table class="plain">
+        <thead><tr><th style="width:20%">Criterion</th><th>How Turnout addresses it</th><th style="width:22%">Evidence</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Technical implementation</strong></td>
+            <td>A Strands Graph with conditional edges inside each department, agents as tools, hooks
+            enforcing contact policy, and real Agent-to-Agent between three separate servers. Six
+            AgentCore services, each for a stated reason.</td>
+            <td><a href="app.html#trace">Agent trace</a><br><a href="#developers">API and code</a></td>
+          </tr>
+          <tr>
+            <td><strong>Design</strong></td>
+            <td>A complete product: a landing page, a chief's board, the volunteers' texts, a network
+            view, settings, and every screen's empty, loading, error and offline states. Light and
+            dark, phone and desktop, 48px targets, an explanation button on every term.</td>
+            <td><a href="app.html">The product</a></td>
+          </tr>
+          <tr>
+            <td><strong>Potential impact</strong></td>
+            <td>Ten cited sources and a named audience. The demo shows the exact failure being
+            prevented, and the chief's part of it takes eight seconds instead of forty minutes.</td>
+            <td><a href="#problem">The problem</a><br><a href="#refs">References</a></td>
+          </tr>
+          <tr>
+            <td><strong>Creativity and originality</strong></td>
+            <td>Good Neighbor agents that are literally good neighbours to each other, a risk engine
+            written to be read rather than trusted, and a deliberate decision to give volunteers no
+            app at all.</td>
+            <td><a href="#different">What is different</a></td>
+          </tr>
+          <tr>
+            <td><strong>Presentation</strong></td>
+            <td>A four minute video recorded from this deployment, opening on an empty apparatus bay
+            and ending on one text message and a truck rolling from the next town.</td>
+            <td><a href="#demo">Demo</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted">
+      Licence: MIT, in the repository root and visible in the About panel. All code was written during
+      the submission period. The only external service is the public National Weather Service alerts
+      API; everything else is AWS.
+    </p>
+  </div>
+</section>
+
+<!-- 8. For developers -->
+<section class="band" id="developers">
+  <div class="wrap stack">
+    <h2>For developers.</h2>
+    <p class="section-lede">
+      Run it locally in two commands, or call the deployed API with the public sandbox key
+      <button class="info" data-tip="sandbox_key" data-label="the sandbox key"></button>.
+    </p>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Run it</h3>
+        <pre class="formula">git clone &lt;repo&gt; &amp;&amp; cd turnout
+uv venv &amp;&amp; uv pip install -e ".[dev]"
+python -m turnout.data.generate
+uvicorn turnout.api.app:app --port 8000</pre>
+        <p class="muted small">Then open http://localhost:8000. The agents call Amazon Bedrock, so
+        AWS credentials with Bedrock access are needed.</p>
+      </div>
+      <div class="card">
+        <h3>Call it</h3>
+        <pre class="formula">curl -H "x-api-key: turnout-sandbox-2026" \
+  https://&lt;host&gt;/api/gaps
+
+curl -X POST https://&lt;host&gt;/api/reply \
+  -H "content-type: application/json" \
+  -d '{"phone":"+15551234567","body":"Y"}'</pre>
+        <p class="muted small">Full schema at <a href="/docs">/docs</a> and
+        <a href="/api/openapi.json">/api/openapi.json</a>.</p>
+      </div>
+    </div>
+
+    <div class="scroll-x">
+      <table class="plain">
+        <thead><tr><th>Endpoint</th><th>What it returns</th></tr></thead>
+        <tbody>
+          <tr><td><code>GET /api/state</code></td><td>Everything the board shows: headline, gaps, ledger, members, incidents, interrupt budget.</td></tr>
+          <tr><td><code>GET /api/gaps</code></td><td>Coverage gaps for the next seven days, each with the numbers behind its risk score.</td></tr>
+          <tr><td><code>GET /api/messages</code></td><td>Every text sent and received. Pass <code>?phone=</code> for one thread.</td></tr>
+          <tr><td><code>GET /api/network</code></td><td>The three departments, the mutual aid balances, and every A2A exchange.</td></tr>
+          <tr><td><code>GET /api/trace</code></td><td>Agent trace events. Pass <code>?since=</code> to poll for new ones.</td></tr>
+          <tr><td><code>POST /api/reply</code></td><td>Deliver an inbound text exactly as a real phone would.</td></tr>
+          <tr><td><code>POST /api/step</code></td><td>Advance the demo week by one step.</td></tr>
+          <tr><td><code>GET /.well-known/agent-card.json</code></td><td>On each department's A2A server: what that department's agent can do.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 9. Safety and limits -->
+<section class="band" id="safety">
+  <div class="wrap stack">
+    <h2>What it will never do.</h2>
+    <ul>
+      <li><strong>It never pages anyone to an incident.</strong> Dispatch stays with dispatch. Turnout works on the day before, not the moment of.</li>
+      <li><strong>It never commits mutual aid without a chief.</strong> A neighbour's agent can auto-approve only inside a rule that neighbour's chief set, such as a delay under ten minutes with the ledger still near balance.</li>
+      <li><strong>It never texts a volunteer during their quiet hours,</strong> or more than the weekly limit. That is enforced by a hook in code, not by asking a model nicely.</li>
+      <li><strong>It never submits a NERIS report on its own.</strong> The chief reviews the draft and presses submit.</li>
+      <li><strong>It never guesses a number it can show.</strong> If the history is thin, the explanation says the estimate leans on a national pattern.</li>
+      <li><strong>It stores no location and no health data.</strong> Names, phone numbers, roles, certifications, availability and response history, and nothing else.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 10. References -->
+<section class="band" id="refs">
+  <div class="wrap stack">
+    <h2>References.</h2>
+    <ol class="refs">
+      <li>NFPA Journal, "Volunteer Fire Service Crisis: U.S. Departments Struggle with Staffing Amid Growing Call Volume", February 2026. <a href="https://www.nfpa.org/news-blogs-and-articles/nfpa-journal/2026/02/11/volunteer-fire-service-crisis">nfpa.org</a></li>
+      <li>Maine Rural Health Research Center, "Ambulance Deserts: Geographic Disparities in the Provision of Ambulance Services", 2023. <a href="https://www.ruralhealthresearch.org/publications/1596">ruralhealthresearch.org</a></li>
+      <li>Mell HK et al., "Emergency Medical Services Response Times in Rural, Suburban, and Urban Areas", JAMA Surgery, 2017. <a href="https://jamanetwork.com/journals/jamasurgery/fullarticle/2643992">jamanetwork.com</a></li>
+      <li>"Shortening Ambulance Response Time Increases Survival in Out-of-Hospital Cardiac Arrest", Journal of the American Heart Association, 2020. <a href="https://www.ahajournals.org/doi/10.1161/JAHA.120.017048">ahajournals.org</a></li>
+      <li>"Predictive Dispatch of Volunteer First Responders: Algorithm Development and Validation", 2023. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10716760/">PMC10716760</a></li>
+      <li>"Planning for time-varying volunteer firefighter systems under probabilistic service disruptions", Transportation Research Part E, 2021. <a href="https://www.sciencedirect.com/science/article/abs/pii/S1366554521002234">sciencedirect.com</a></li>
+      <li>FireRescue1, "Volunteer fire departments face rising call volumes and staffing challenges in rural Missouri". <a href="https://www.firerescue1.com/volunteer-fire-service/rural-mo-volunteer-fire-departments-face-rising-call-volumes-staffing-challenges">firerescue1.com</a></li>
+      <li>Capital Area Fire Districts Association, "The Greatest Threat Facing the Volunteer Fire Service is Math, Not Recruitment". <a href="https://cafda.net/the-greatest-threat-facing-the-volunteer-fire-service-is-math-not-recruitment-this-is-a-must-read-article/">cafda.net</a></li>
+      <li>US Fire Administration, NFIRS sunset and the move to NERIS, 2026. <a href="https://www.usfa.fema.gov/nfirs/sunset/">usfa.fema.gov</a></li>
+      <li>Gloria Mark, University of California Irvine, research on the cost of interruption and recovery of focus.</li>
+      <li>Strands Agents SDK documentation: Graph and the Agent-to-Agent protocol. <a href="https://strandsagents.com/">strandsagents.com</a></li>
+      <li>Amazon Bedrock AgentCore documentation. <a href="https://docs.aws.amazon.com/bedrock-agentcore/">docs.aws.amazon.com</a></li>
+    </ol>
+  </div>
+</section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div>
+      <strong>Turnout</strong> &middot; MIT licence &middot; Built for the AWS Agents for Humans
+      Hackathon, September 2026.
+      <br>
+      <span class="small">Millbrook, Riverton and Cedar Hollow are fictional departments. All data is synthetic.</span>
+    </div>
+    <div class="theme-toggle"></div>
+  </div>
+</footer>
+
+<script src="infotips.js"></script>
+<script src="common.js"></script>
+</body>
+</html>

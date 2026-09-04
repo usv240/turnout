@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" role="img"
+     aria-labelledby="arch-title arch-desc" font-family="Inter, system-ui, sans-serif">
+  <title id="arch-title">Turnout architecture</title>
+  <desc id="arch-desc">Inside Millbrook, a Strands Graph runs Watch, then Closer, then Neighbor, then
+    Chief Gate, with Scribe and Cert Clock as separate scheduled jobs. Neighbor talks over the
+    Agent-to-Agent protocol to Riverton and Cedar Hollow, which run the same agent code in their own
+    AgentCore runtimes with their own data. Every agent uses AgentCore Memory, Gateway, Identity,
+    Code Interpreter and Observability, and reaches members and the chief by text message.</desc>
+
+  <style>
+    .box { fill: var(--surface, #fff); stroke: var(--border, #E4E2DC); stroke-width: 1.5; rx: 10; }
+    .agent { fill: var(--accent-soft, #FBEAE8); stroke: var(--accent, #B3261E); stroke-width: 1.5; rx: 10; }
+    .svc { fill: var(--surface-2, #F3F2EE); stroke: var(--border, #E4E2DC); stroke-width: 1.5; rx: 10; }
+    .peer { fill: none; stroke: var(--accent, #B3261E); stroke-width: 1.5; stroke-dasharray: 5 4; rx: 10; }
+    .t { fill: var(--text, #1A1A1A); font-size: 14px; font-weight: 600; }
+    .s { fill: var(--text-muted, #5C5C57); font-size: 11.5px; }
+    .lbl { fill: var(--text-muted, #5C5C57); font-size: 11px; }
+    .hdr { fill: var(--text, #1A1A1A); font-size: 15px; font-weight: 700; }
+    .flow { stroke: var(--accent, #B3261E); stroke-width: 2; fill: none; }
+    .thin { stroke: var(--border, #E4E2DC); stroke-width: 1.5; fill: none; }
+    .a2a { stroke: var(--accent, #B3261E); stroke-width: 2.5; fill: none; stroke-dasharray: 7 5; }
+  </style>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent, #B3261E)"/>
+    </marker>
+    <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--border, #E4E2DC)"/>
+    </marker>
+  </defs>
+
+  <!-- People -->
+  <rect class="box" x="20" y="120" width="150" height="66"/>
+  <text class="t" x="95" y="148" text-anchor="middle">14 volunteers</text>
+  <text class="s" x="95" y="167" text-anchor="middle">plain text messages</text>
+
+  <rect class="box" x="20" y="250" width="150" height="66"/>
+  <text class="t" x="95" y="278" text-anchor="middle">Chief Ortiz</text>
+  <text class="s" x="95" y="297" text-anchor="middle">one text per decision</text>
+
+  <rect class="box" x="20" y="380" width="150" height="66"/>
+  <text class="t" x="95" y="408" text-anchor="middle">Station board</text>
+  <text class="s" x="95" y="427" text-anchor="middle">web, light and dark</text>
+
+  <!-- Millbrook runtime -->
+  <rect class="box" x="215" y="40" width="430" height="440" stroke-dasharray="0"/>
+  <text class="hdr" x="235" y="68">Millbrook: AgentCore Runtime</text>
+  <text class="s" x="235" y="87">Strands Graph, conditional edges, bounded</text>
+
+  <rect class="agent" x="240" y="105" width="170" height="56"/>
+  <text class="t" x="325" y="129" text-anchor="middle">Watch</text>
+  <text class="s" x="325" y="147" text-anchor="middle">scores every window</text>
+
+  <rect class="agent" x="240" y="188" width="170" height="56"/>
+  <text class="t" x="325" y="212" text-anchor="middle">Closer</text>
+  <text class="s" x="325" y="230" text-anchor="middle">asks our own members</text>
+
+  <rect class="agent" x="240" y="271" width="170" height="56"/>
+  <text class="t" x="325" y="295" text-anchor="middle">Neighbor</text>
+  <text class="s" x="325" y="313" text-anchor="middle">asks the next town</text>
+
+  <rect class="agent" x="240" y="354" width="170" height="56"/>
+  <text class="t" x="325" y="378" text-anchor="middle">Chief Gate</text>
+  <text class="s" x="325" y="396" text-anchor="middle">one text, then stop</text>
+
+  <path class="flow" d="M325 161 L325 188" marker-end="url(#arrow)"/>
+  <path class="flow" d="M325 244 L325 271" marker-end="url(#arrow)"/>
+  <path class="flow" d="M325 327 L325 354" marker-end="url(#arrow)"/>
+  <path class="flow" d="M410 216 C 470 216 470 370 410 378" marker-end="url(#arrow)"/>
+  <text class="lbl" x="478" y="300">no peer needed</text>
+
+  <rect class="svc" x="455" y="105" width="170" height="56"/>
+  <text class="t" x="540" y="129" text-anchor="middle">Scribe</text>
+  <text class="s" x="540" y="147" text-anchor="middle">voice note to NERIS</text>
+
+  <rect class="svc" x="455" y="188" width="170" height="56"/>
+  <text class="t" x="540" y="212" text-anchor="middle">Cert Clock</text>
+  <text class="s" x="540" y="230" text-anchor="middle">nothing lapses</text>
+
+  <rect class="svc" x="455" y="392" width="170" height="66"/>
+  <text class="t" x="540" y="416" text-anchor="middle">Hooks</text>
+  <text class="s" x="540" y="434" text-anchor="middle">quiet hours, ask limits</text>
+  <text class="s" x="540" y="450" text-anchor="middle">enforced in code</text>
+
+  <!-- people to runtime -->
+  <path class="thin" d="M170 153 L240 133" marker-end="url(#arrow2)"/>
+  <path class="thin" d="M170 283 L240 375" marker-end="url(#arrow2)"/>
+  <path class="thin" d="M170 405 L215 400" marker-end="url(#arrow2)"/>
+
+  <!-- Peers -->
+  <rect class="peer" x="700" y="105" width="270" height="120"/>
+  <text class="hdr" x="720" y="133">Riverton F&amp;R</text>
+  <text class="s" x="720" y="153">own AgentCore Runtime, own data</text>
+  <text class="s" x="720" y="171">Coverage agent, own AgentCard</text>
+  <text class="s" x="720" y="189">chief pre-approved short delays</text>
+  <text class="s" x="720" y="207">answers: can cover, 9 min</text>
+
+  <rect class="peer" x="700" y="255" width="270" height="120"/>
+  <text class="hdr" x="720" y="283">Cedar Hollow VFD</text>
+  <text class="s" x="720" y="303">own AgentCore Runtime, own data</text>
+  <text class="s" x="720" y="321">Coverage agent, own AgentCard</text>
+  <text class="s" x="720" y="339">at high risk in the same window</text>
+  <text class="s" x="720" y="357">answers: declined, and why</text>
+
+  <path class="a2a" d="M410 292 C 560 292 560 165 700 165" marker-end="url(#arrow)"/>
+  <path class="a2a" d="M410 299 C 560 299 560 315 700 315" marker-end="url(#arrow)"/>
+  <text class="lbl" x="600" y="232" text-anchor="middle">Agent-to-Agent protocol</text>
+  <text class="lbl" x="600" y="248" text-anchor="middle">a coverage question, never the roster</text>
+
+  <!-- Platform services -->
+  <rect class="svc" x="215" y="510" width="755" height="86"/>
+  <text class="hdr" x="235" y="538">Amazon Bedrock AgentCore</text>
+  <text class="s" x="235" y="560">Runtime: one isolated runtime per department, sessions that outlive a request</text>
+  <text class="s" x="235" y="578">Memory: who says yes to which window &#183; Gateway: roster, SMS, weather, NERIS as tools</text>
+  <text class="s" x="600" y="560">Identity: act for a department, prove it to a peer</text>
+  <text class="s" x="600" y="578">Code Interpreter: the risk engine &#183; Observability: every step traced</text>
+
+  <path class="thin" d="M430 480 L430 510" marker-end="url(#arrow2)"/>
+  <path class="thin" d="M835 375 L835 510" marker-end="url(#arrow2)"/>
+
+  <text class="s" x="20" y="600">Amazon Bedrock: Claude Sonnet 4.6 for reasoning, Haiku 4.5 for parsing</text>
+</svg>
