@@ -1,6 +1,6 @@
 # Turnout: Landing Page Specification
 
-Follows `../DESIGN_SYSTEM.md`. This file contains final copy. Every domain term and every metric has an InfoTip; the InfoTip text is given inline as `[i: ...]`.
+Follows `DESIGN_SYSTEM.md`. This file contains final copy. Every domain term and every metric has an InfoTip; the InfoTip text is given inline as `[i: ...]`.
 
 Accent: engine red (`#B3261E` light, `#F26D63` dark). Hero imagery: a quiet station bay, daylight, one engine, no people. In dark mode, the same bay at dusk with the bay lights on.
 

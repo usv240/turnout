@@ -1,6 +1,6 @@
 # Turnout: UX Specification
 
-Screen-by-screen and message-by-message. Follows `../DESIGN_SYSTEM.md` sections 9 to 16. Copy here is final unless a test proves it confusing.
+Screen-by-screen and message-by-message. Follows `DESIGN_SYSTEM.md` sections 9 to 16. Copy here is final unless a test proves it confusing.
 
 ---
 
