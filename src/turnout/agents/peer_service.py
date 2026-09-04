@@ -88,7 +88,7 @@ def evaluate_request(req: CoverageRequest, rt=None) -> CoverageOffer:
             ledger_delta_hours=round(hours, 1), valid_until=r.clock.now() + timedelta(hours=9),
             peer_current_risk=own.risk_score,
             auto_approved=d.auto_approve.enabled and delay <= d.auto_approve.max_delay_min)
-    r.emit("a2a_offer", to=req.from_dept, request_id=req.request_id, can_cover=offer.can_cover,
+    r.emit("a2a_offer_sent", to=req.from_dept, request_id=req.request_id, can_cover=offer.can_cover,
            delay=offer.estimated_delay_min, reason=offer.reason_if_declined, own_risk=own.risk_score)
     return offer
 

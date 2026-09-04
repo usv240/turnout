@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -45,6 +46,10 @@ def setup(scenario_path: str, dept_id: str = "millbrook") -> tuple[runtime.Runti
     st, sc = load_scenario(scenario_path)
     clock = Clock(datetime.fromisoformat(sc["clock_start"]))
     rt = runtime.local_runtime(dept_id, clock=clock, store=st)
+    # In the deployed container the peer departments run as their own A2A servers, so the demo
+    # negotiates over real HTTP. Locally they run in process, so one command is enough to try it.
+    if os.environ.get("TURNOUT_USE_A2A", "").lower() in ("1", "true", "yes"):
+        rt.use_a2a = True
     for a in sc.get("weather_alerts", []):
         rt.weather.add(a["zone"], WeatherAlert(event=a["event"], start=datetime.fromisoformat(a["start"]),
                                                end=datetime.fromisoformat(a["end"]), multiplier=a["multiplier"]))

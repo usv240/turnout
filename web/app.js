@@ -280,7 +280,7 @@
           if (e.kind === "a2a_request") {
             line = nm(e.dept_id) + " asked " + (e.peers || []).map(nm).join(" and ") + " to cover " + e.window;
           } else if (e.kind === "a2a_offer") {
-            line = nm(e.dept_id) + " answered: " + (e.can_cover
+            line = nm(e.peer) + " answered: " + (e.can_cover
               ? "can cover, " + e.delay + " minute delay" : "declined, " + e.reason);
           } else if (e.kind === "a2a_confirmed") {
             line = nm(e.dept_id) + " confirmed" + (e.auto_approved ? ", auto-approved inside their chief's rule" : "");
@@ -320,6 +320,7 @@
     ask_blocked: "Ask blocked by policy",
     a2a_request: "Asked the neighbours over A2A",
     a2a_offer: "Neighbour answered",
+    a2a_offer_sent: "Answered a neighbour",
     a2a_confirmed: "Neighbour confirmed",
     a2a_pending_chief: "Neighbour's chief must approve",
     a2a_error: "Neighbour unreachable",

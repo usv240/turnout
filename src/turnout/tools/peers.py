@@ -120,6 +120,11 @@ def request_coverage_from_peers(gap_id: str) -> dict:
             r.emit("a2a_error", peer=peer_id, error=f"{type(e).__name__}: {e}"[:300])
             offer = CoverageOffer(request_id=req.request_id, from_dept=peer_id, can_cover=False,
                                   reason_if_declined=f"no usable answer from {peer_id}")
+        # Record what came back. Over A2A the peer emits its own event in its own process, so
+        # without this the requester's trace would show questions and no answers.
+        r.emit("a2a_offer", peer=peer_id, request_id=req.request_id, can_cover=offer.can_cover,
+               delay=offer.estimated_delay_min, reason=offer.reason_if_declined,
+               peer_risk=offer.peer_current_risk, auto_approved=offer.auto_approved)
         offers.append(offer)
         balance_after = r.store.ledger_balance(d.id, peer_id) + (hours if offer.can_cover else 0)
         scored.append(score_offer(offer, balance_after, offer.peer_current_risk, d.max_offer_delay_min))
