@@ -129,7 +129,21 @@ header.site nav a { color: var(--text-muted); text-decoration: none; font-size: 
 header.site nav a:hover { color: var(--text); }
 .header-actions { margin-left: auto; display: flex; gap: var(--s2); align-items: center; }
 header.site nav + .header-actions { margin-left: var(--s4); }
-@media (min-width: 900px) { header.site nav { display: flex; } }
+@media (min-width: 1040px) { header.site nav { display: flex; } }
+
+/* The primary action never wraps. It wrapped onto four lines when the navigation grew, which is
+   the sort of thing that only shows up in a browser at a real width. */
+header.site .header-actions .btn { white-space: nowrap; }
+header.site nav a { white-space: nowrap; }
+
+/* Back link. At the top of the content, where a person looks for it, not only in the footer. */
+.backlink {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--text-muted); text-decoration: none; font-size: .9375rem;
+  padding: var(--s2) 0; margin-bottom: var(--s4); min-height: 44px;
+}
+.backlink:hover { color: var(--text); }
+.backlink svg { flex: none; }
 
 /* Buttons ----------------------------------------------------------------- */
 .btn {
@@ -212,9 +226,12 @@ body.app .btn { min-height: 48px; }
 .hero h1 { max-width: 20ch; }
 .hero .lede { font-size: clamp(1.0625rem, 2.2vw, 1.25rem); color: var(--text-muted); max-width: 60ch; }
 .credibility {
-  display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4);
+  display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5);
   margin-top: var(--s5); padding-top: var(--s5); border-top: 1px solid var(--border);
   font-size: .9375rem; color: var(--text-muted);
+  /* It is a paragraph, so it inherited the 68ch reading limit and stacked into three lines even on
+     a wide screen. These are three short credibility markers, not prose. */
+  max-width: none;
 }
 .credibility > span { display: inline-flex; align-items: center; }
 
@@ -333,6 +350,28 @@ footer.site .wrap { display: flex; flex-wrap: wrap; gap: var(--s4); align-items:
 @media (max-width: 640px) { .trace-row { grid-template-columns: 1fr; gap: 2px; } }
 
 .notice { padding: var(--s4); border-radius: var(--r-md); background: var(--info-soft); border: 1px solid var(--info); color: var(--text); font-size: .9375rem; }
+
+/* Phone header. The brand, a three-way theme toggle and a call to action do not fit in 390px, and
+   the overflow pushed the whole page sideways. The toggle moves to the footer below 640px, where
+   there is already one, and the action keeps the space. */
+@media (max-width: 640px) {
+  header.site .header-actions .theme-toggle { display: none; }
+  header.site .bar { gap: var(--s3); padding-left: var(--s3); padding-right: var(--s3); }
+  header.site .header-actions .btn { padding: var(--s3) var(--s4); }
+  .brand { font-size: 1.0625rem; }
+}
+
+/* A grid item defaults to min-width:auto, so a long unbroken line inside one, such as a curl
+   command, makes the item refuse to shrink and the page scrolls sideways. This is the fix for the
+   whole class of that bug. */
+.grid > *, .steps > *, .row-2 > * { min-width: 0; }
+.card { min-width: 0; overflow-wrap: break-word; }
+.tabs { max-width: 100%; }
+pre, .formula { max-width: 100%; }
+
+/* Never, on any page. The design system says the body does not scroll sideways, so this is the
+   backstop that makes that true rather than aspirational. */
+html, body { overflow-x: clip; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }

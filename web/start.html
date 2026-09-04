@@ -9,7 +9,7 @@
   (function () {
     try {
       var m = localStorage.getItem("turnout-theme");
-      if (m && m !== "system") document.documentElement.setAttribute("data-theme", m);
+      document.documentElement.setAttribute("data-theme", m && m !== "system" ? m : "light");
     } catch (e) {}
   })();
 </script>
@@ -58,6 +58,8 @@
 </header>
 
 <main id="main" class="wrap wizard" style="padding-top:var(--s6);padding-bottom:var(--s8)">
+  <a class="backlink" href="index.html"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3 L5 8 l5 5"/></svg>Back to the overview</a>
+
   <h1 style="font-size:1.75rem">Set up your department</h1>
   <p class="muted">Three steps, about three minutes. Nothing is sent to anyone until you finish, and
   no member is texted until the first poll goes out tomorrow morning.</p>

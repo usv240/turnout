@@ -15,7 +15,9 @@
       b.setAttribute("aria-pressed", String(b.dataset.mode === mode));
     });
   }
-  window.ThemeControl = { apply: apply, current: function () { return stored() || "system"; } };
+  // Light is the default. A person who has their laptop in dark mode should still meet the
+  // product in the theme it was drawn in, unless they choose otherwise here.
+  window.ThemeControl = { apply: apply, current: function () { return stored() || "light"; } };
 
   function mountThemeToggle() {
     document.querySelectorAll(".theme-toggle").forEach(function (host) {
@@ -32,7 +34,7 @@
         host.appendChild(b);
       });
     });
-    apply(stored() || "system");
+    apply(stored() || "light");
   }
 
   /* InfoTips ------------------------------------------------------------

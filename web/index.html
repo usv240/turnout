@@ -10,7 +10,7 @@
   (function () {
     try {
       var m = localStorage.getItem("turnout-theme");
-      if (m && m !== "system") document.documentElement.setAttribute("data-theme", m);
+      document.documentElement.setAttribute("data-theme", m && m !== "system" ? m : "light");
     } catch (e) {}
   })();
 </script>
@@ -26,12 +26,9 @@
     <nav aria-label="Main">
       <a href="#problem">The problem</a>
       <a href="#how">How it works</a>
-      <a href="#different">What is different</a>
-      <a href="#built">How it is built</a>
+      <a href="try.html">Try it yourself</a>
       <a href="#judges">For judges</a>
-      <a href="#developers">For developers</a>
-      <a href="try.html">Try your own numbers</a>
-      <a href="start.html">Set up a department</a>
+      <a href="#developers">Developers</a>
     </nav>
     <div class="header-actions">
       <div class="theme-toggle"></div>
