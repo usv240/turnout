@@ -201,19 +201,19 @@ Copy rules: no jargon without an InfoTip, no sentence over 25 words, no paragrap
 - Images: AVIF or WebP with width descriptors; hero video under 3 MB, H.264 and WebM.
 - Lighthouse, measured against the deployed sites rather than asserted:
 
-| Page | Performance | Accessibility | Best practices | SEO |
-|---|---|---|---|---|
-| Turnout landing | 98 | 100 | 100 | 100 |
-| Tally landing | 99 | 100 | 100 | 100 |
-| Tally setup | 100 | 100 | 100 | 100 |
-| Turnout crew | 83, then the layout shift was fixed | 100 | 100 | 100 |
-| Tally sponsor | 82, then the layout shift was fixed | 100 | 100 | 100 |
+| Page | Performance | Accessibility | Best practices | SEO | Layout shift |
+|---|---|---|---|---|---|
+| Turnout landing | 100 | 100 | 100 | 100 | 0 |
+| Tally landing | 100 | 100 | 100 | 100 | 0 |
+| Tally setup | 100 | 100 | 100 | 100 | 0 |
+| Turnout crew | 99 | 100 | 100 | 100 | 0 |
+| Tally sponsor | 100 | 100 | 100 | 100 | 0.04 |
 
-  The two pages that scored in the eighties both did so for one reason: they fetched their content
-  and then grew, giving a cumulative layout shift around 0.33. Both now write their summary blocks
-  out at final height in the HTML and fill in only the words, which took the shift under 0.07. A
-  page that reflows under a reader loses their place, and on these two pages the reader is a
-  sponsor auditing a claim or a volunteer reading what was asked of them.
+  Measured on 5 September 2026 against the deployed services. The two new pages first scored 83 and
+  82, both for one reason: they fetched their content and then grew, a cumulative layout shift of
+  about 0.33. Both now write their summary blocks out at final height in the HTML and fill in only
+  the words. A page that reflows under a reader loses their place, and on these two pages the reader
+  is a sponsor auditing a claim or a volunteer reading what was asked of them.
 
 ---
 
@@ -387,7 +387,7 @@ The rubric: "Does the project deliver a complete, coherent product experience an
 - [ ] Product screens meet section 14 sizing and navigation rules.
 - [x] axe-core clean in both themes at three widths, in CI, on both projects.
 - [x] Lighthouse 100 on accessibility, best practices and SEO on every page measured; performance
-      98 and 99 on the two landing pages, and cumulative layout shift under 0.07 everywhere.
+      99 to 100 on every page, and cumulative layout shift at or under 0.04 everywhere.
 - [ ] The judge's journey (section 16) completes in under five minutes without help.
 - [ ] Undo, pause, and reset exist and work.
 - [ ] No emojis, no em dashes, no hype words anywhere.
