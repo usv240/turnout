@@ -3,7 +3,8 @@
 - An access role, so App Runner may pull the image from ECR.
 - An instance role per service, so the running container may call Amazon Bedrock. Scoped to
   InvokeModel on the specific foundation models and inference profiles each app uses, rather than
-  a wildcard, because a demo credential that can call anything is a bad example to ship.
+  a wildcard, because a demo credential that can call anything is a bad example to ship. The
+  same role gets the AgentCore Code Interpreter and Memory actions the apps use at run time.
 """
 
 import json
@@ -75,6 +76,30 @@ put_policy(INSTANCE_ROLE, "InvokeBedrockModels", {
         "Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
         "Resource": sorted(set(resources)),
     }],
+})
+
+# The two AgentCore services the apps use at run time. Code Interpreter runs the risk and claim
+# arithmetic; Memory holds each department's response history. Both planes share the
+# bedrock-agentcore action prefix in IAM, including ListMemories and GetMemory, which the SDK
+# exposes on the separate bedrock-agentcore-control client. The first version of this policy used
+# bedrock-agentcore-control as the prefix for those two, which is not an IAM namespace, and every
+# Memory write in production quietly fell back to the local store until the trace said why.
+put_policy(INSTANCE_ROLE, "UseAgentCore", {
+    "Version": "2012-10-17",
+    "Statement": [
+        {"Sid": "CodeInterpreterSessions", "Effect": "Allow", "Resource": "*",
+         "Action": ["bedrock-agentcore:StartCodeInterpreterSession",
+                    "bedrock-agentcore:InvokeCodeInterpreter",
+                    "bedrock-agentcore:StopCodeInterpreterSession",
+                    "bedrock-agentcore:GetCodeInterpreterSession",
+                    "bedrock-agentcore:ListCodeInterpreterSessions"]},
+        {"Sid": "MemoryReadWrite", "Effect": "Allow", "Resource": "*",
+         "Action": ["bedrock-agentcore:CreateEvent", "bedrock-agentcore:ListEvents",
+                    "bedrock-agentcore:GetEvent", "bedrock-agentcore:RetrieveMemoryRecords",
+                    "bedrock-agentcore:ListMemoryRecords"]},
+        {"Sid": "MemoryLookup", "Effect": "Allow", "Resource": "*",
+         "Action": ["bedrock-agentcore:ListMemories", "bedrock-agentcore:GetMemory"]},
+    ],
 })
 
 print(f"\nACCESS_ROLE_ARN={access_arn}")

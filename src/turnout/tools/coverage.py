@@ -145,7 +145,8 @@ def compute_gaps(days: int = 7, apparatus: str = "fire") -> list[Gap]:
             inputs=RiskInputs(expected_calls=res.expected_calls, p_understaffed=res.p_understaffed,
                               hazard=res.hazard, hazard_names=res.hazard_names, severity=res.severity,
                               missing_roles=res.missing_roles, available_member_ids=[m.id for m, _ in av],
-                              history_days=res.history_days, ran_in=res.ran_in),
+                              history_days=res.history_days, ran_in=res.ran_in,
+                              fallback_reason=res.fallback_reason),
             risk_score=res.risk_score, level=res.level, explanation=res.explanation,
             status="thin" if feasible else "open",
         )

@@ -127,3 +127,82 @@ def test_a_memory_that_does_not_answer_falls_back_and_says_why():
     assert "no memory for millbrook" in out["reason"]
     assert memory.status("millbrook")["local"] == 1
     memory.written.clear()
+
+
+class _FakeInterpreter:
+    """Enough of the bedrock-agentcore client to exercise session handling without AWS.
+
+    Every session it starts is alive until `kill()` is called, after which any invoke against it
+    raises the way the real service does for a terminated session.
+    """
+
+    def __init__(self):
+        self.started = 0
+        self.dead: set[str] = set()
+        self.stopped: list[str] = []
+
+    def start_code_interpreter_session(self, **kw):
+        self.started += 1
+        return {"sessionId": f"session-{self.started}"}
+
+    def stop_code_interpreter_session(self, **kw):
+        self.stopped.append(kw["sessionId"])
+        return {}
+
+    def kill(self, session_id):
+        self.dead.add(session_id)
+
+    def invoke_code_interpreter(self, **kw):
+        if kw["sessionId"] in self.dead:
+            raise RuntimeError("ValidationException: session is not active")
+        if kw["name"] == "writeFiles":
+            return {"stream": [{"result": {"content": [{"type": "text", "text": "ok"}]}}]}
+        src = kw["arguments"]["code"]
+        text = "kernel loaded 12" if "kernel loaded" in src else (
+            f"{src}\n{code.MARKER}" + '{"p_understaffed": 1.0, "missing_roles": ["driver_operator"], '
+            '"risk_score": 0.83, "level": "critical"}\n')
+        return {"stream": [{"result": {"content": [{"type": "text", "text": text}]}}]}
+
+
+def _session_with(fake):
+    s = code.RiskKernelSession(region="us-east-1")
+    s._client = fake
+    # boto3 is only touched inside _ensure when there is no client; give it one and no session.
+    return s
+
+
+def test_a_terminated_session_is_replaced_rather_than_reused():
+    """The service ends a session after its timeout. Reusing the dead id made every later score
+    fall back to local, silently, about fifteen minutes after each deploy."""
+    fake = _FakeInterpreter()
+    s = _session_with(fake)
+    first = s.score(payload([[["firefighter"], 0.45]]))
+    assert first["ran_in"] == "agentcore_code_interpreter" and first["session_id"] == "session-1"
+
+    fake.kill("session-1")
+    second = s.score(payload([[["firefighter"], 0.45]]))
+    assert second["ran_in"] == "agentcore_code_interpreter"
+    assert second["session_id"] == "session-2", "a fresh session, not the dead one"
+    assert fake.started == 2
+
+
+def test_a_session_near_its_deadline_is_renewed_before_it_fails():
+    fake = _FakeInterpreter()
+    s = _session_with(fake)
+    s.score(payload([[["firefighter"], 0.45]]))
+    s._started_at -= code.SESSION_SECONDS  # pretend the timeout has all but elapsed
+    out = s.score(payload([[["firefighter"], 0.45]]))
+    assert out["session_id"] == "session-2"
+    assert "session-1" in fake.stopped, "the old one is closed rather than left to expire"
+
+
+def test_two_failures_in_a_row_give_up_honestly():
+    fake = _FakeInterpreter()
+    s = _session_with(fake)
+    s.score(payload([[["firefighter"], 0.45]]))
+    fake.kill("session-1")
+    fake.kill("session-2")
+    fake.kill("session-3")
+    with pytest.raises(code.CodeInterpreterUnavailable) as err:
+        s.score(payload([[["firefighter"], 0.45]]))
+    assert "not active" in str(err.value)

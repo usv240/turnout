@@ -121,6 +121,8 @@
       local_fallback: "locally, because AgentCore did not answer"
     };
     row("Computed in", WHERE[i.ran_in] || i.ran_in, "where_it_runs");
+    // Saying which one answered is half of honest. When it was not the first choice, say why.
+    if (i.fallback_reason) row("Why it fell back", i.fallback_reason, null);
 
     var wrap = window.h("div", {}, [dl]);
     wrap.appendChild(window.h("pre", { class: "formula" },

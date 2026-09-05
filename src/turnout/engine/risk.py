@@ -205,6 +205,9 @@ class RiskResult:
     ran_in: str = "local"
     """Where the matching and probability actually executed: agentcore_code_interpreter, local, or
     local_fallback when AgentCore was unreachable. On the screen rather than assumed."""
+    fallback_reason: str = ""
+    """Why it fell back, when it did. "Said which one answered" is only half of honest; the other
+    half is saying why the first choice did not."""
 
 
 def level_for(score: float, critical: float = 0.75, high: float = 0.50, elevated: float = 0.25) -> Level:
@@ -267,6 +270,7 @@ def score_window(
     score = out["risk_score"]
     lvl = Level(out["level"])
     ran_in = out["ran_in"]
+    fallback_reason = str(out.get("fallback_reason") or "")
 
     exp_calls = lam * hazard
     if exp_calls < 0.05:
@@ -294,4 +298,4 @@ def score_window(
         parts.append("estimate leans on national pattern")
     explanation = ", ".join(parts)
     return RiskResult(round(lam, 3), round(pu, 3), round(hazard, 3), names, round(sev, 3), missing,
-                      round(score, 3), lvl, explanation, rate.history_days, ran_in)
+                      round(score, 3), lvl, explanation, rate.history_days, ran_in, fallback_reason)

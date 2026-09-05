@@ -132,6 +132,9 @@ class RiskInputs(BaseModel):
     """Where the matching and probability executed: agentcore_code_interpreter, local, local_cached,
     or local_fallback when AgentCore was unreachable. Shown on the gap card, because a claim about
     where code ran is only worth making if it can be checked."""
+    fallback_reason: str = ""
+    """The error that sent it local, when one did. Shown on the card and put in the trace, so a
+    fallback is a fact on the screen rather than a quiet substitution."""
 
 
 GapStatus = Literal["open", "asking_members", "members_declined", "asking_neighbors", "needs_chief",

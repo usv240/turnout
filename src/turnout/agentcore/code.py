@@ -66,31 +66,40 @@ class RiskKernelSession:
         self.region = region
         self.identifier = identifier
         self._session_id: str | None = None
+        self._started_at: float = 0.0
         self._client = None
         self._lock = threading.Lock()
         self.last_error: str | None = None
 
     # lifecycle ---------------------------------------------------------------
     def _ensure(self) -> str:
+        # A session lives for SESSION_SECONDS and then the service terminates it. A cached id for a
+        # dead session made every later call fail, and since the failure fell back to local, the
+        # sandbox silently stopped being used about fifteen minutes after each deploy. Replace it
+        # before the deadline rather than discover it after.
+        if self._session_id and time.time() - self._started_at > SESSION_SECONDS - 60:
+            self.close()
         if self._session_id:
             return self._session_id
         with self._lock:
             if self._session_id:
                 return self._session_id
             try:
-                import boto3
+                if self._client is None:
+                    import boto3
 
-                self._client = boto3.client("bedrock-agentcore", region_name=self.region)
+                    self._client = boto3.client("bedrock-agentcore", region_name=self.region)
                 r = self._client.start_code_interpreter_session(
                     codeInterpreterIdentifier=self.identifier,
                     name="turnout-risk-kernel",
                     sessionTimeoutSeconds=SESSION_SECONDS,
                 )
                 self._session_id = r["sessionId"]
+                self._started_at = time.time()
                 self._load_kernel()
                 return self._session_id
             except Exception as exc:
-                self.last_error = f"{type(exc).__name__}: {exc}"[:200]
+                self.last_error = f"{type(exc).__name__}: {exc}"[:400]
                 self._session_id = None
                 raise CodeInterpreterUnavailable(self.last_error) from exc
 
@@ -131,6 +140,21 @@ class RiskKernelSession:
     def score(self, payload: dict) -> dict:
         """Run kernel.score(payload) in the sandbox and return its result plus where it ran."""
         started = time.time()
+        for attempt in (1, 2):
+            try:
+                return self._score_once(payload, started)
+            except CodeInterpreterUnavailable:
+                raise
+            except Exception as exc:
+                # The service can end a session under us, or a call can fail once. A dead session
+                # must not be reused, and one failure is not a reason to stop using the sandbox.
+                self.last_error = f"{type(exc).__name__}: {exc}"[:400]
+                self._session_id = None
+                if attempt == 2:
+                    raise CodeInterpreterUnavailable(self.last_error) from exc
+        raise CodeInterpreterUnavailable(self.last_error or "unknown")  # pragma: no cover
+
+    def _score_once(self, payload: dict, started: float) -> dict:
         self._ensure()
         code = (
             "import json, kernel\n"
@@ -172,7 +196,7 @@ def score(payload: dict, region: str = "us-east-1", use_agentcore: bool = True) 
         except Exception as exc:
             local = kernel.score(payload)
             local["ran_in"] = "local_fallback"
-            local["fallback_reason"] = f"{type(exc).__name__}: {exc}"[:160]
+            local["fallback_reason"] = f"{type(exc).__name__}: {exc}"[:400]
             return local
     local = kernel.score(payload)
     local["ran_in"] = "local"

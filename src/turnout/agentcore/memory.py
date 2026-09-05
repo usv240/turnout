@@ -90,7 +90,7 @@ class ResponseMemory:
                     time.sleep(3)
                 raise MemoryUnavailable("memory did not become active in time")
             except Exception as exc:
-                self.last_error = f"{type(exc).__name__}: {exc}"[:200]
+                self.last_error = f"{type(exc).__name__}: {exc}"[:400]
                 raise MemoryUnavailable(self.last_error) from exc
 
     # writing and reading ------------------------------------------------------
@@ -167,10 +167,11 @@ def record_response(dept_id: str, member_id: str, window_type: str, said_yes: bo
         out = for_department(dept_id).record(member_id, window_type, said_yes)
         stat["agentcore"] += 1
         stat["memory_id"] = out.get("memory_id")
+        stat["last_error"] = None  # a stale error next to a live count would read as both
         return out
     except Exception as exc:
         stat["local"] += 1
-        stat["last_error"] = f"{type(exc).__name__}: {exc}"[:160]
+        stat["last_error"] = f"{type(exc).__name__}: {exc}"[:400]
         return {"stored_in": "local_fallback", "reason": stat["last_error"]}
 
 

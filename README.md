@@ -110,7 +110,7 @@ Model ids are configuration, never hard-coded. See `src/turnout/config.py`; over
 ## Tests
 
 ```bash
-pytest -q          # 130 tests
+pytest -q          # 133 tests
 ```
 
 The suite includes real A2A over HTTP between separate servers, including a test that asks a peer
