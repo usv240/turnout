@@ -1,34 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" role="img"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" role="img"
      aria-labelledby="arch-title arch-desc" font-family="Inter, system-ui, sans-serif">
   <title id="arch-title">Turnout architecture</title>
   <desc id="arch-desc">Inside Millbrook, a Strands Graph runs Watch, then Closer, then Neighbor, then
-    Chief Gate, with Scribe and Cert Clock as separate scheduled jobs. Neighbor talks over the
-    Agent-to-Agent protocol to Riverton and Cedar Hollow, which run the same agent code in their own
-    AgentCore runtimes with their own data. Every agent uses AgentCore Memory, Gateway, Identity,
-    Code Interpreter and Observability, and reaches members and the chief by text message.</desc>
+    Chief Gate, with Scribe and Cert Clock as separate scheduled jobs and hooks enforcing contact
+    policy in code. Neighbor talks over the Agent-to-Agent protocol to Riverton and Cedar Hollow,
+    which run the same agent code in their own processes with their own data and their own
+    AgentCards. Two Amazon Bedrock AgentCore services are live: Code Interpreter runs every risk
+    score, and Memory holds each department's response history. Runtime, Gateway, Identity and
+    Observability are designed in and labelled as designed rather than running. The web tier is AWS
+    App Runner, and members and the chief are reached by text message.</desc>
 
   <style>
-    .box { fill: var(--surface, #fff); stroke: var(--border, #E4E2DC); stroke-width: 1.5; rx: 10; }
-    .agent { fill: var(--accent-soft, #FBEAE8); stroke: var(--accent, #B3261E); stroke-width: 1.5; rx: 10; }
-    .svc { fill: var(--surface-2, #F3F2EE); stroke: var(--border, #E4E2DC); stroke-width: 1.5; rx: 10; }
-    .peer { fill: none; stroke: var(--accent, #B3261E); stroke-width: 1.5; stroke-dasharray: 5 4; rx: 10; }
-    .t { fill: var(--text, #1A1A1A); font-size: 14px; font-weight: 600; }
-    .s { fill: var(--text-muted, #5C5C57); font-size: 11.5px; }
-    .lbl { fill: var(--text-muted, #5C5C57); font-size: 11px; }
-    .hdr { fill: var(--text, #1A1A1A); font-size: 15px; font-weight: 700; }
-    .flow { stroke: var(--accent, #B3261E); stroke-width: 2; fill: none; }
-    .thin { stroke: var(--border, #E4E2DC); stroke-width: 1.5; fill: none; }
-    .a2a { stroke: var(--accent, #B3261E); stroke-width: 2.5; fill: none; stroke-dasharray: 7 5; }
+    /* Rendered standalone in a README and inside an img tag, where the page's CSS variables never
+       reach it, so every fallback has to stand on its own. */
+    .bg { fill: #FAFAF8; }
+    .box { fill: #fff; stroke: #E4E2DC; stroke-width: 1.5; rx: 10; }
+    .agent { fill: #FBEAE8; stroke: #B3261E; stroke-width: 1.5; rx: 10; }
+    .svc { fill: #F3F2EE; stroke: #E4E2DC; stroke-width: 1.5; rx: 10; }
+    .peer { fill: #fff; stroke: #B3261E; stroke-width: 1.5; stroke-dasharray: 5 4; rx: 10; }
+    .t { fill: #1A1A1A; font-size: 14px; font-weight: 600; }
+    .s { fill: #5C5C57; font-size: 11.5px; }
+    .lbl { fill: #5C5C57; font-size: 11px; }
+    .hdr { fill: #1A1A1A; font-size: 15px; font-weight: 700; }
+    .tag { fill: #1A1A1A; font-size: 11.5px; font-weight: 700; }
+    .flow { stroke: #B3261E; stroke-width: 2; fill: none; }
+    .thin { stroke: #C9C7C1; stroke-width: 1.5; fill: none; }
+    .a2a { stroke: #B3261E; stroke-width: 2.5; fill: none; stroke-dasharray: 7 5; }
   </style>
 
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent, #B3261E)"/>
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#B3261E"/>
     </marker>
     <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--border, #E4E2DC)"/>
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#C9C7C1"/>
     </marker>
   </defs>
+
+  <rect class="bg" x="0" y="0" width="1000" height="700"/>
 
   <!-- People -->
   <rect class="box" x="20" y="120" width="150" height="66"/>
@@ -43,9 +52,9 @@
   <text class="t" x="95" y="408" text-anchor="middle">Station board</text>
   <text class="s" x="95" y="427" text-anchor="middle">web, light and dark</text>
 
-  <!-- Millbrook runtime -->
-  <rect class="box" x="215" y="40" width="430" height="440" stroke-dasharray="0"/>
-  <text class="hdr" x="235" y="68">Millbrook: AgentCore Runtime</text>
+  <!-- Millbrook -->
+  <rect class="box" x="215" y="40" width="430" height="440"/>
+  <text class="hdr" x="235" y="68">Millbrook</text>
   <text class="s" x="235" y="87">Strands Graph, conditional edges, bounded</text>
 
   <rect class="agent" x="240" y="105" width="170" height="56"/>
@@ -68,7 +77,7 @@
   <path class="flow" d="M325 244 L325 271" marker-end="url(#arrow)"/>
   <path class="flow" d="M325 327 L325 354" marker-end="url(#arrow)"/>
   <path class="flow" d="M410 216 C 470 216 470 370 410 378" marker-end="url(#arrow)"/>
-  <text class="lbl" x="478" y="300">no peer needed</text>
+  <text class="lbl" x="452" y="352">no peer needed</text>
 
   <rect class="svc" x="455" y="105" width="170" height="56"/>
   <text class="t" x="540" y="129" text-anchor="middle">Scribe</text>
@@ -88,36 +97,43 @@
   <path class="thin" d="M170 283 L240 375" marker-end="url(#arrow2)"/>
   <path class="thin" d="M170 405 L215 400" marker-end="url(#arrow2)"/>
 
-  <!-- Peers -->
+  <!-- Peers. The caption sits above the column rather than over the boxes it describes. -->
+  <text class="tag" x="835" y="66" text-anchor="middle">Agent-to-Agent protocol</text>
+  <text class="s" x="835" y="86" text-anchor="middle">a coverage question, never the roster</text>
+
   <rect class="peer" x="700" y="105" width="270" height="120"/>
   <text class="hdr" x="720" y="133">Riverton F&amp;R</text>
-  <text class="s" x="720" y="153">own AgentCore Runtime, own data</text>
-  <text class="s" x="720" y="171">Coverage agent, own AgentCard</text>
-  <text class="s" x="720" y="189">chief pre-approved short delays</text>
-  <text class="s" x="720" y="207">answers: can cover, 9 min</text>
+  <text class="s" x="720" y="155">own process, own data</text>
+  <text class="s" x="720" y="173">Coverage agent, own AgentCard</text>
+  <text class="s" x="720" y="191">chief pre-approved short delays</text>
+  <text class="s" x="720" y="209">answers: can cover, 9 min</text>
 
   <rect class="peer" x="700" y="255" width="270" height="120"/>
   <text class="hdr" x="720" y="283">Cedar Hollow VFD</text>
-  <text class="s" x="720" y="303">own AgentCore Runtime, own data</text>
-  <text class="s" x="720" y="321">Coverage agent, own AgentCard</text>
-  <text class="s" x="720" y="339">at high risk in the same window</text>
-  <text class="s" x="720" y="357">answers: declined, and why</text>
+  <text class="s" x="720" y="305">own process, own data</text>
+  <text class="s" x="720" y="323">Coverage agent, own AgentCard</text>
+  <text class="s" x="720" y="341">at high risk in the same window</text>
+  <text class="s" x="720" y="359">answers: declined, and why</text>
 
   <path class="a2a" d="M410 292 C 560 292 560 165 700 165" marker-end="url(#arrow)"/>
   <path class="a2a" d="M410 299 C 560 299 560 315 700 315" marker-end="url(#arrow)"/>
-  <text class="lbl" x="600" y="232" text-anchor="middle">Agent-to-Agent protocol</text>
-  <text class="lbl" x="600" y="248" text-anchor="middle">a coverage question, never the roster</text>
 
-  <!-- Platform services -->
-  <rect class="svc" x="215" y="510" width="755" height="86"/>
+  <!-- Platform. Live and designed are separated, because the difference is the whole point. -->
+  <rect class="svc" x="215" y="510" width="755" height="140"/>
   <text class="hdr" x="235" y="538">Amazon Bedrock AgentCore</text>
-  <text class="s" x="235" y="560">Runtime: one isolated runtime per department, sessions that outlive a request</text>
-  <text class="s" x="235" y="578">Memory: who says yes to which window &#183; Gateway: roster, SMS, weather, NERIS as tools</text>
-  <text class="s" x="600" y="560">Identity: act for a department, prove it to a peer</text>
-  <text class="s" x="600" y="578">Code Interpreter: the risk engine &#183; Observability: every step traced</text>
+
+  <text class="tag" x="235" y="564">Live on the deployment</text>
+  <text class="s" x="235" y="586">Code Interpreter: every risk score, in a sandbox</text>
+  <text class="s" x="235" y="606">Memory: who says yes to which window</text>
+
+  <text class="tag" x="615" y="564">Designed in, not running</text>
+  <text class="s" x="615" y="586">Runtime: one isolated runtime per department</text>
+  <text class="s" x="615" y="606">Gateway: roster, SMS, weather, NERIS as tools</text>
+  <text class="s" x="615" y="626">Identity: act for a department, prove it to a peer</text>
+  <text class="s" x="235" y="626">Observability: the Trace tab reads the event stream</text>
 
   <path class="thin" d="M430 480 L430 510" marker-end="url(#arrow2)"/>
   <path class="thin" d="M835 375 L835 510" marker-end="url(#arrow2)"/>
 
-  <text class="s" x="20" y="600">Amazon Bedrock: Claude Sonnet 4.6 for reasoning, Haiku 4.5 for parsing</text>
+  <text class="s" x="20" y="682">Web tier: AWS App Runner &#183; Amazon Bedrock: Claude Sonnet 4.6 for reasoning, Haiku 4.5 for parsing</text>
 </svg>

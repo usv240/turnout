@@ -263,7 +263,7 @@
     </div>
 
     <div class="card">
-      <img src="architecture.svg" alt="Architecture diagram. Inside Millbrook, a Strands Graph runs Watch, then Closer, then Neighbor, then Chief Gate, with Scribe and Cert Clock as separate jobs. Neighbor talks over the Agent-to-Agent protocol to Riverton and Cedar Hollow, which run the same agent code in their own AgentCore runtimes. All agents use AgentCore Memory, Gateway, Identity, Code Interpreter and Observability, and reach members and the chief by text message." style="width:100%;height:auto">
+      <img src="architecture.svg" alt="Architecture diagram. Inside Millbrook, a Strands Graph runs Watch, then Closer, then Neighbor, then Chief Gate, with Scribe and Cert Clock as separate jobs and hooks enforcing quiet hours and ask limits in code. Neighbor talks over the Agent-to-Agent protocol to Riverton and Cedar Hollow, which run the same agent code in their own processes with their own data and their own AgentCards, answering a coverage question and never the roster. Two AgentCore services are live: Code Interpreter runs every risk score and Memory holds who says yes to which window. Runtime, Gateway and Identity are designed in rather than running. The web tier is AWS App Runner." style="width:100%;height:auto">
     </div>
 
     <h3 style="margin-top:var(--s5)">Amazon Bedrock AgentCore</h3>
