@@ -42,12 +42,17 @@ def _text_of(response: Any) -> str:
     return "\n".join(t for t in out if t.strip())
 
 
-def extract_json(text: str) -> str:
+def extract_json(text: str, require: tuple[str, ...] = ()) -> str:
     """The first complete JSON object in an agent reply.
 
     A streaming reply can repeat the answer and echo the request back, so taking everything between
     the first brace and the last one produces nonsense. Scan for the first balanced object that
     actually parses instead.
+
+    `require` names keys the object must carry to count. Without it, an agent that quotes the
+    request before answering hands back the request: a CoverageRequest and a CoverageOffer both
+    open with request_id, so the first parseable object is the wrong one and the offer is read as
+    an unintelligible peer. Asking for `can_cover` skips the echo and finds the answer.
     """
     import json
 
@@ -75,10 +80,14 @@ def extract_json(text: str) -> str:
             if depth == 0 and start >= 0:
                 candidate = text[start:i + 1]
                 try:
-                    json.loads(candidate)
-                    return candidate
+                    parsed = json.loads(candidate)
                 except ValueError:
                     start = -1
+                    continue
+                if not require or (isinstance(parsed, dict)
+                                   and all(k in parsed for k in require)):
+                    return candidate
+                start = -1
     return text
 
 

@@ -79,7 +79,7 @@ class A2APeer:
 
     def ask(self, req: CoverageRequest) -> CoverageOffer:
         out = self._send("COVERAGE_REQUEST " + _signed(req, req.from_dept))
-        return CoverageOffer.model_validate_json(extract_json(out))
+        return CoverageOffer.model_validate_json(extract_json(out, require=("can_cover",)))
 
     def confirm(self, conf: CoverageConfirm, req: CoverageRequest) -> dict:
         """Confirm with the peer, and treat an unreadable answer as unknown rather than a decline.
@@ -96,7 +96,7 @@ class A2APeer:
         for _ in range(2):
             out = self._send("COVERAGE_CONFIRM " + json.dumps(payload))
             try:
-                result = json.loads(extract_json(out))
+                result = json.loads(extract_json(out, require=("accepted",)))
             except (ValueError, TypeError):
                 last = str(out)[:160]
                 continue

@@ -98,3 +98,30 @@ def test_canonical_form_ignores_key_order_and_the_signature_itself():
     b = {k: a[k] for k in reversed(list(a))}
     assert canonical(a) == canonical(b)
     assert canonical(a) == canonical({**a, "signature": "v1:whoever:deadbeef"})
+
+
+def test_extract_json_skips_the_echoed_request_and_finds_the_offer():
+    """A peer that quotes the request before answering must not be read as unintelligible.
+
+    A CoverageRequest and a CoverageOffer both open with request_id, so the first parseable object
+    in the reply is the wrong one. This was a live failure: Cedar Hollow echoed the request, the
+    offer never parsed, and the board said "no usable answer from cedar".
+    """
+    from turnout.a2a.client import extract_json
+
+    reply = ('Happy to help. You asked: {"request_id": "req-1", "from_dept": "millbrook", '
+             '"signature": "v1:millbrook:abc123"}\n'
+             'Our answer: {"request_id": "req-1", "from_dept": "cedar", "can_cover": false, '
+             '"reason_if_declined": "own west district at high risk"}')
+
+    assert '"from_dept": "millbrook"' in extract_json(reply)  # the old, wrong behaviour
+    picked = extract_json(reply, require=("can_cover",))
+    assert '"can_cover": false' in picked
+    assert "millbrook" not in picked
+
+
+def test_extract_json_falls_back_to_the_raw_text_when_nothing_matches():
+    from turnout.a2a.client import extract_json
+
+    assert extract_json("no json here", require=("can_cover",)) == "no json here"
+    assert extract_json('{"request_id": "x"}', require=("can_cover",)) == '{"request_id": "x"}'
