@@ -78,8 +78,25 @@ class A2APeer:
         return send_text(self.base_url, text, timeout=self.timeout)
 
     def ask(self, req: CoverageRequest) -> CoverageOffer:
-        out = self._send("COVERAGE_REQUEST " + _signed(req, req.from_dept))
-        return CoverageOffer.model_validate_json(extract_json(out, require=("can_cover",)))
+        """Ask a peer to cover a window, and ask twice before giving up on it.
+
+        The peer is an agent, so its reply occasionally comes back as prose rather than the JSON its
+        tool returned. `confirm` already retries for this reason and `ask` did not, which is the
+        wrong way round: a garbled confirmation is caught by the chief reading her message, but a
+        garbled offer is recorded as a decline and the window quietly stays open. Watching the
+        deployed demo, this turned a healthy neighbour into "no usable answer" about one time in
+        four.
+        """
+        message = "COVERAGE_REQUEST " + _signed(req, req.from_dept)
+        last: Exception | None = None
+        for _ in range(2):
+            out = self._send(message)
+            try:
+                return CoverageOffer.model_validate_json(
+                    extract_json(out, require=("can_cover",)))
+            except Exception as exc:  # unparseable, so ask again before calling it a decline
+                last = exc
+        raise last  # the caller records a decline with the reason, and emits a2a_error
 
     def confirm(self, conf: CoverageConfirm, req: CoverageRequest) -> dict:
         """Confirm with the peer, and treat an unreadable answer as unknown rather than a decline.

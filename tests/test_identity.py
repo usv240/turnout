@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import datetime
 
 import pytest
+from pydantic import ValidationError
 
 from turnout.a2a.identity import KEY_ENV, canonical, key_for, sign, verify
 from turnout.models import CoverageRequest, Level, Role
@@ -125,3 +126,43 @@ def test_extract_json_falls_back_to_the_raw_text_when_nothing_matches():
 
     assert extract_json("no json here", require=("can_cover",)) == "no json here"
     assert extract_json('{"request_id": "x"}', require=("can_cover",)) == '{"request_id": "x"}'
+
+
+def test_ask_retries_once_before_calling_a_peer_unintelligible():
+    """A peer that answers in prose the first time is asked again, not written off.
+
+    An offer read as a decline leaves a window open with nobody looking at it again.
+    """
+    from turnout.models import CoverageOffer
+    from turnout.tools import peers
+
+    replies = iter([
+        "Sorry, could you restate the window?",                      # prose, no offer
+        '{"request_id": "sig-test", "from_dept": "riverton", "can_cover": true, '
+        '"estimated_delay_min": 9}',
+    ])
+    peer = peers.A2APeer("riverton", "http://127.0.0.1:1")
+    peer._send = lambda text: next(replies)
+
+    offer = peer.ask(_request_model())
+    assert isinstance(offer, CoverageOffer)
+    assert offer.can_cover is True and offer.estimated_delay_min == 9
+
+
+def test_ask_gives_up_after_the_second_bad_answer():
+    from turnout.tools import peers
+
+    peer = peers.A2APeer("riverton", "http://127.0.0.1:1")
+    calls = []
+    peer._send = lambda text: calls.append(text) or "still not JSON"
+    with pytest.raises(ValidationError):
+        peer.ask(_request_model())
+    assert len(calls) == 2, "it should have asked exactly twice"
+
+
+def _request_model():
+    return CoverageRequest(
+        request_id="sig-test", from_dept="millbrook",
+        window_start=datetime(2026, 9, 10, 10), window_end=datetime(2026, 9, 10, 14),
+        district="north", roles_needed=[Role.DRIVER_OPERATOR], risk_level=Level.CRITICAL,
+        risk_explanation="short a driver", expires_at=datetime(2026, 9, 10, 9))
