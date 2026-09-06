@@ -7,6 +7,7 @@ path, not the in-process shortcut used by the local demo.
 
 from __future__ import annotations
 
+import json
 import socket
 import threading
 import time
@@ -64,6 +65,19 @@ def _request(window_start=datetime(2026, 9, 10, 10), window_end=datetime(2026, 9
                            expires_at=datetime(2026, 9, 10, 9))
 
 
+def _wire(req: CoverageRequest, as_dept: str | None = None) -> str:
+    """The request as it actually goes on the wire: JSON carrying a mutual aid signature.
+
+    `as_dept` exists so a test can sign as somebody it is not, which is the case that matters.
+    """
+    from turnout.a2a.identity import sign
+
+    body = req.model_dump(mode="json")
+    body["signature"] = ""
+    body["signature"] = sign(as_dept or req.from_dept, body)
+    return json.dumps(body)
+
+
 def test_each_department_publishes_an_agent_card(peers):
     card = fetch_card(peers["riverton"])
     assert card["name"]
@@ -71,7 +85,7 @@ def test_each_department_publishes_an_agent_card(peers):
 
 
 def test_riverton_offers_over_the_wire(peers):
-    reply = send_text(peers["riverton"], "COVERAGE_REQUEST " + _request().model_dump_json())
+    reply = send_text(peers["riverton"], "COVERAGE_REQUEST " + _wire(_request()))
     offer = CoverageOffer.model_validate_json(extract_json(reply))
     assert offer.from_dept == "riverton"
     assert offer.can_cover is True
@@ -79,11 +93,39 @@ def test_riverton_offers_over_the_wire(peers):
 
 
 def test_cedar_declines_over_the_wire_and_says_why(peers):
-    reply = send_text(peers["cedar"], "COVERAGE_REQUEST " + _request().model_dump_json())
+    reply = send_text(peers["cedar"], "COVERAGE_REQUEST " + _wire(_request()))
     offer = CoverageOffer.model_validate_json(extract_json(reply))
     assert offer.from_dept == "cedar"
     assert offer.can_cover is False
     assert offer.reason_if_declined
+    # It declines on its own risk, not because it could not tell who was asking.
+    assert "identity" not in offer.reason_if_declined
+
+
+def test_an_unsigned_request_is_refused(peers):
+    """No signature, no apparatus. A peer commits a crew on the strength of this."""
+    reply = send_text(peers["riverton"], "COVERAGE_REQUEST " + _request().model_dump_json())
+    offer = CoverageOffer.model_validate_json(extract_json(reply))
+    assert offer.can_cover is False
+    assert "identity not established" in offer.reason_if_declined
+
+
+def test_a_request_signed_by_somebody_else_is_refused(peers):
+    """Cedar Hollow cannot ask Riverton for a crew while claiming to be Millbrook."""
+    reply = send_text(peers["riverton"], "COVERAGE_REQUEST " + _wire(_request(), as_dept="cedar"))
+    offer = CoverageOffer.model_validate_json(extract_json(reply))
+    assert offer.can_cover is False
+    assert "identity not established" in offer.reason_if_declined
+
+
+def test_a_request_edited_after_signing_is_refused(peers):
+    """Widen the window after signing and the signature stops matching the contents."""
+    body = json.loads(_wire(_request()))
+    body["window_end"] = "2026-09-10T22:00:00"
+    reply = send_text(peers["riverton"], "COVERAGE_REQUEST " + json.dumps(body))
+    offer = CoverageOffer.model_validate_json(extract_json(reply))
+    assert offer.can_cover is False
+    assert "identity not established" in offer.reason_if_declined
 
 
 def test_a_peer_cannot_read_our_roster(peers):

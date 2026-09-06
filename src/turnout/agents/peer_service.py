@@ -127,7 +127,12 @@ def apply_confirm(conf: CoverageConfirm, req: CoverageRequest, rt=None) -> dict:
 
 
 def make_peer_tools(rt):
-    """Build this department's A2A tools, bound to its own runtime."""
+    """Build this department's A2A tools, bound to its own runtime.
+
+    These two closures are the front door. Everything above them is deterministic and trusted,
+    because the only other caller is the in-process LocalPeer, which never crosses a boundary. So
+    the signature check belongs here and nowhere else.
+    """
 
     @tool
     def evaluate_coverage_request(request_json: str) -> str:
@@ -136,7 +141,24 @@ def make_peer_tools(rt):
         Args:
             request_json: JSON of a CoverageRequest.
         """
-        return evaluate_request(CoverageRequest.model_validate_json(request_json), rt=rt).model_dump_json()
+        from turnout.a2a.identity import verify
+
+        blob = json.loads(request_json)
+        claimed = str(blob.get("from_dept", ""))
+        verdict = verify(blob, claimed)
+        rt.emit("a2a_identity_check", frm=claimed, exchange="request", **verdict.as_event())
+        if not verdict.ok:
+            # Refuse in the shape the caller already handles, so an unsigned request reads as a
+            # decline with a reason rather than an error the neighbour has to interpret.
+            return CoverageOffer(
+                request_id=str(blob.get("request_id", "unknown")), from_dept=rt.dept_id,
+                can_cover=False,
+                reason_if_declined=f"refused, identity not established: {verdict.reason}",
+            ).model_dump_json()
+
+        offer = evaluate_request(CoverageRequest.model_validate(blob), rt=rt)
+        offer.requester_verified = True
+        return offer.model_dump_json()
 
     @tool
     def apply_coverage_confirm(confirm_json: str) -> str:
@@ -145,8 +167,23 @@ def make_peer_tools(rt):
         Args:
             confirm_json: JSON with keys confirm (CoverageConfirm) and request (CoverageRequest).
         """
+        from turnout.a2a.identity import verify
+
         blob = json.loads(confirm_json)
-        return json.dumps(apply_confirm(CoverageConfirm.model_validate(blob["confirm"]),
-                                        CoverageRequest.model_validate(blob["request"]), rt=rt))
+        conf_blob, req_blob = blob["confirm"], blob["request"]
+
+        # Both halves are checked. The confirmation is what moves hours onto the ledger, and the
+        # request is what says which window is being paid for, so forging either one is worth
+        # something to whoever is doing it.
+        for part, body, claimed in (("confirm", conf_blob, str(conf_blob.get("confirmed_by", ""))),
+                                    ("request", req_blob, str(req_blob.get("from_dept", "")))):
+            verdict = verify(body, claimed)
+            rt.emit("a2a_identity_check", frm=claimed, exchange=part, **verdict.as_event())
+            if not verdict.ok:
+                return json.dumps({"accepted": False, "refused": True,
+                                   "note": f"refused, identity not established: {verdict.reason}"})
+
+        return json.dumps(apply_confirm(CoverageConfirm.model_validate(conf_blob),
+                                        CoverageRequest.model_validate(req_blob), rt=rt))
 
     return [evaluate_coverage_request, apply_coverage_confirm]

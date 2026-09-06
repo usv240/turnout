@@ -67,6 +67,7 @@ department publishes an AgentCard and answers coverage questions about itself, a
 | `GraphBuilder` with conditional edges, `set_max_node_executions` | The coverage pass | A safety workflow must be deterministic and auditable. A Swarm would let agents hand off freely, which is wrong here. |
 | Hooks (`BeforeToolCallEvent`) | Every agent | Quiet hours and the weekly ask limit are enforced in code. A policy about not bothering volunteers should not be something a prompt can talk its way around. |
 | `A2AServer` plus AgentCard skills | One per department | Departments are separate organizations. A2A is the protocol built for exactly that boundary. |
+| Signed requests across that boundary | `a2a/identity.py`, checked in the peer tools | Riverton commits an apparatus and a ledger debt on the strength of a request. It has to be able to tell that Millbrook sent it. |
 | Structured output (Pydantic) | Reply parsing, NERIS drafts, offers | Downstream code never parses prose. |
 | Agents as tools | Scribe, Cert Clock | Self-contained jobs with clear inputs and outputs. |
 
@@ -110,11 +111,29 @@ Model ids are configuration, never hard-coded. See `src/turnout/config.py`; over
 ## Tests
 
 ```bash
-pytest -q          # 133 tests
+pytest -q          # 145 tests
 ```
 
 The suite includes real A2A over HTTP between separate servers, including a test that asks a peer
-for its roster and asserts no roster comes back.
+for its roster and asserts no roster comes back, and three that forge a mutual aid request and prove
+a peer refuses it.
+
+### Who is allowed to ask
+
+A coverage request crosses an organizational boundary, and the answer costs the department that
+receives it an apparatus and a place in the ledger. So every request and every confirmation carries
+an HMAC over its own contents, checked before the receiving agent evaluates anything. Unsigned,
+signed by a department we hold no agreement with, or signed by one department while claiming to come
+from another, and it is refused with the reason rather than answered.
+
+Departments already sign a paper mutual aid agreement before they roll for each other, naming the
+two parties, so a key held by both mirrors how this works on the ground rather than inventing
+something cloud-shaped. Set `TURNOUT_A2A_KEYS="millbrook:<key>,riverton:<key>"` to supply real keys.
+With nothing set, a published constant derives a demo keyring so the local run and the tests work
+without setup; that mode is labelled `demo_key` in the trace and is not pretending to be a secret.
+
+This is the smaller, honest version of what AgentCore Identity would do. The architecture diagram
+still lists Identity as designed rather than running, because it is.
 
 | Area | What is covered |
 |---|---|
@@ -124,6 +143,7 @@ for its roster and asserts no roster comes back.
 | Message templates | Every template is length-checked so no text splits across two messages |
 | Policy hooks | Quiet hours and weekly ask limits provably block a send |
 | A2A | AgentCard discovery, an offer, a decline with its reason, roster isolation, and a full negotiation |
+| Mutual aid identity | An unsigned request, one signed by a different department, and one edited after signing are each refused with a reason, over the wire and in unit tests |
 | Coverage flow | Gap detected, closed by a member, closed by a neighbour, batched into one interrupt |
 | Onboarding | Group text and spreadsheet pastes, phone formats, duplicates, and that a pasted roster can actually make a crew |
 | Scoring endpoint | Unknown roles and weather refused with the list it knows, and more people never raising the score |

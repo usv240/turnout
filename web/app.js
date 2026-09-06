@@ -320,6 +320,9 @@
           } else if (e.kind === "a2a_offer") {
             line = nm(e.peer) + " answered: " + (e.can_cover
               ? "can cover, " + e.delay + " minute delay" : "declined, " + e.reason);
+            // Only shown when the peer actually checked a signature. The in-process peer used by the
+            // single-command demo crosses no boundary and so claims nothing here.
+            if (e.verified) { line += ". They verified who was asking"; }
           } else if (e.kind === "a2a_confirmed") {
             line = nm(e.dept_id) + " confirmed" + (e.auto_approved ? ", auto-approved inside their chief's rule" : "");
           } else if (e.kind === "a2a_pending_chief") {
@@ -362,6 +365,7 @@
     a2a_confirmed: "Neighbour confirmed",
     a2a_pending_chief: "Neighbour's chief must approve",
     a2a_error: "Neighbour unreachable",
+    a2a_identity_check: "Checked who was asking",
     decision_sent: "Chief interrupted",
     decision_deferred: "Held back, budget spent",
     gap_covered: "Gap covered",

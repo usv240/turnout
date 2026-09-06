@@ -155,6 +155,10 @@ class CoverageOffer(BaseModel):
     reason_if_declined: str = ""
     peer_current_risk: float = 0.0
     auto_approved: bool = False
+    # True only when this offer answered a request whose mutual aid signature was checked and held.
+    # The in-process peer used by the local demo leaves it False, because nothing crossed a boundary
+    # there and claiming a check that did not happen would be the one lie this file cannot afford.
+    requester_verified: bool = False
 
 
 class Gap(BaseModel):
@@ -193,12 +197,16 @@ class CoverageRequest(BaseModel):
     risk_level: Level
     risk_explanation: str
     expires_at: datetime
+    # Set on the way out over A2A and checked on the way in. See turnout.a2a.identity: a peer commits
+    # an apparatus on the strength of this, so it has to be able to tell who is asking.
+    signature: str = ""
 
 
 class CoverageConfirm(BaseModel):
     request_id: str
     confirmed_by: str
     confirmed_at: datetime
+    signature: str = ""
 
 
 class LedgerEntry(BaseModel):

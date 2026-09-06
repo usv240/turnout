@@ -49,6 +49,21 @@ class LocalPeer:
         return self._as_peer(lambda r: apply_confirm(conf, req, rt=r))
 
 
+def _signed(model, as_dept: str) -> str:
+    """Serialise a model with a mutual aid signature over its own contents.
+
+    Signing happens here rather than inside the model so that the in-process `LocalPeer` path stays
+    exactly as it was. Nothing crosses an organizational boundary there, so there is nothing to
+    prove; the signature belongs to the wire, not to the object.
+    """
+    from turnout.a2a.identity import sign
+
+    body = model.model_dump(mode="json")
+    body["signature"] = ""
+    body["signature"] = sign(as_dept, body)
+    return json.dumps(body)
+
+
 class A2APeer:
     """A peer department reached over the Agent-to-Agent protocol."""
 
@@ -63,7 +78,7 @@ class A2APeer:
         return send_text(self.base_url, text, timeout=self.timeout)
 
     def ask(self, req: CoverageRequest) -> CoverageOffer:
-        out = self._send("COVERAGE_REQUEST " + req.model_dump_json())
+        out = self._send("COVERAGE_REQUEST " + _signed(req, req.from_dept))
         return CoverageOffer.model_validate_json(extract_json(out))
 
     def confirm(self, conf: CoverageConfirm, req: CoverageRequest) -> dict:
@@ -75,7 +90,8 @@ class A2APeer:
         crew that is not coming. So this asks once more, and if the second answer is also unreadable
         it says so, which is what the chief's message then reports.
         """
-        payload = {"confirm": conf.model_dump(mode="json"), "request": req.model_dump(mode="json")}
+        payload = {"confirm": json.loads(_signed(conf, conf.confirmed_by)),
+                   "request": json.loads(_signed(req, req.from_dept))}
         last = ""
         for _ in range(2):
             out = self._send("COVERAGE_CONFIRM " + json.dumps(payload))
@@ -141,7 +157,8 @@ def request_coverage_from_peers(gap_id: str) -> dict:
         # without this the requester's trace would show questions and no answers.
         r.emit("a2a_offer", peer=peer_id, request_id=req.request_id, can_cover=offer.can_cover,
                delay=offer.estimated_delay_min, reason=offer.reason_if_declined,
-               peer_risk=offer.peer_current_risk, auto_approved=offer.auto_approved)
+               peer_risk=offer.peer_current_risk, auto_approved=offer.auto_approved,
+               verified=offer.requester_verified)
         offers.append(offer)
         balance_after = r.store.ledger_balance(d.id, peer_id) + (hours if offer.can_cover else 0)
         scored.append(score_offer(offer, balance_after, offer.peer_current_risk, d.max_offer_delay_min))
