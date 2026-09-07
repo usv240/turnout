@@ -111,7 +111,7 @@ Model ids are configuration, never hard-coded. See `src/turnout/config.py`; over
 ## Tests
 
 ```bash
-pytest -q          # 149 tests
+pytest -q          # 156 tests
 ```
 
 The suite includes real A2A over HTTP between separate servers, including a test that asks a peer
@@ -184,6 +184,16 @@ python tools/a11y_audit.py --base http://127.0.0.1:8000     # axe-core, layout a
 page renders, and fails the build on any WCAG 2.2 A or AA violation, any page that scrolls sideways,
 any control under its target size, or any console error. It is currently clean. Both checks run in
 GitHub Actions on every push, in `.github/workflows/ci.yml`.
+
+### The house rule applies to what the model writes, not just to what we write
+
+`tools/check_copy.py` holds every file here to one rule: no emoji, no em or en dashes. It runs in CI
+on every push, and for a long time it never looked at the text that actually reaches a person, which
+is mostly written by a model at request time. That gap was not theoretical: the sibling project
+shipped two questions to its deployed service with em dashes in them.
+
+`src/turnout/house.py` closes it. Model output passes through `plain()` on its way to a screen or a phone.
+Punctuation only, nothing truncated or reworded, and it is idempotent so it is safe to apply twice.
 
 ## Deploy
 

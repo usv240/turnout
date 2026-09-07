@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from strands import tool
 
+from turnout.house import plain, plain_all
 from turnout.models import NerisDraft
 from turnout.tools.common import dept, now, rt
 
@@ -31,7 +32,12 @@ def save_neris_draft(incident_id: str, draft_json: str) -> dict:
     r = rt()
     d = dept()
     i = r.store.get_incident(d.id, incident_id)
-    i.draft = NerisDraft.model_validate_json(draft_json)
+    draft = NerisDraft.model_validate_json(draft_json)
+    # The narrative is the model's prose and it goes into a federal incident record, so it is held
+    # to the same punctuation rule as everything else here. See turnout.house.
+    draft.narrative = plain(draft.narrative)
+    draft.uncertain_fields = plain_all(list(draft.uncertain_fields))
+    i.draft = draft
     i.status = "draft"
     r.store.put_incident(i)
     unsure = ", ".join(i.draft.uncertain_fields) if i.draft.uncertain_fields else "none"

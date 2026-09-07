@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from turnout.clock import Clock
+from turnout.house import plain
 from turnout.models import Message
 from turnout.store import Store
 
@@ -50,6 +51,7 @@ class SimSmsChannel:
 
     def send(self, dept_id: str, to: str, body: str, purpose: str, member_id: str | None = None,
              held: bool = False) -> Message:
+        body = plain(body)
         msg = Message(dept_id=dept_id, at=self.clock.now(), to=to, member_id=member_id, direction="out",
                       body=body, purpose=purpose, held_for_quiet_hours=held)
         self.store.put_message(msg)
@@ -105,6 +107,7 @@ class AwsSmsChannel:
 
     def send(self, dept_id: str, to: str, body: str, purpose: str, member_id: str | None = None,
              held: bool = False) -> Message:
+        body = plain(body)
         self.client.send_text_message(DestinationPhoneNumber=to, OriginationIdentity=self.origination,
                                       MessageBody=body, MessageType="TRANSACTIONAL")
         msg = Message(dept_id=dept_id, at=self.clock.now(), to=to, member_id=member_id, direction="out",
