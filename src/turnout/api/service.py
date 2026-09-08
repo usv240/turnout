@@ -126,6 +126,13 @@ class DemoService:
         elif worst is not None:
             headline = f"{worst.level.value.capitalize()} gap. {window_label(worst)}. Working on it."
             tone = "working"
+        elif "watch" not in self.done:
+            # No gaps and nothing scored are not the same claim. Before the coverage pass has run
+            # there is no verdict to report, and saying every window is covered announces an outcome
+            # the system has not computed. A judge arriving on a fresh demo read that as the product
+            # having already done its job, which left them with no reason to press anything.
+            headline = "The week has not been scored yet."
+            tone = "idle"
         else:
             headline = "All windows covered through Sunday."
             tone = "clear"

@@ -285,6 +285,9 @@ footer.site .wrap { display: flex; flex-wrap: wrap; gap: var(--s4); align-items:
 .status-line.clear { background: var(--success-soft); border-color: var(--success); color: var(--success); }
 .status-line.working { background: var(--warning-soft); border-color: var(--warning); color: var(--warning); }
 .status-line.needs_you { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
+/* Nothing has been scored yet, so this is a statement of fact rather than a verdict. It has
+   to look unlike the three that are verdicts, or a fresh demo reads as an outcome. */
+.status-line.idle { background: var(--surface); border-color: var(--border); color: var(--text-muted); }
 
 .quiet-meter {
   display: flex; align-items: center; gap: var(--s3);

@@ -73,3 +73,25 @@ def test_a_cleaned_message_is_never_longer_than_it_was():
     """Segment budgets are checked elsewhere against 160 characters, so this must not add to one."""
     for s in [f"a {EM} b", "plain text", f"x{NBSP}y", "\U0001F600 z", f"end{chr(0x2026)}"]:
         assert len(plain(s)) <= len(s) + 2  # only the ellipsis expands, by two characters
+
+
+def test_a_fresh_demo_does_not_claim_an_outcome_it_has_not_computed():
+    """No gaps and nothing scored are not the same claim.
+
+    Before the coverage pass runs there is no verdict, and the board used to announce "All windows
+    covered through Sunday" on a demo where nothing had happened. A judge arriving cold read that as
+    the product having already done its job.
+    """
+    from turnout.api.service import DemoService
+
+    svc = DemoService()
+    fresh = svc.state()
+    assert fresh["tone"] == "idle"
+    assert "covered" not in fresh["headline"].lower()
+    assert fresh["headline"] == "The week has not been scored yet."
+
+    # Once the coverage pass has run and nothing is outstanding, the verdict is real again.
+    svc.done.append("watch")
+    scored = svc.state()
+    assert scored["tone"] == "clear"
+    assert scored["headline"] == "All windows covered through Sunday."
