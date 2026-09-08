@@ -78,11 +78,24 @@
     }
 
     var doneCount = state.steps.filter(function (s) { return s.done; }).length;
+    // This demo is one shared scenario in one container, so whoever arrives next inherits the
+    // state the last person left. The state they most often inherit is "finished", because both
+    // the recorder and anyone pressing Play the rest run it to the end. Until this branch existed,
+    // that arrival looked like a dead product: every step greyed out and reading "Done", and the
+    // only way forward a small secondary Reset in the corner. The way forward has to be the most
+    // prominent thing on the page, not the least.
     var shared = document.getElementById("shared-note");
     if (shared) {
-      if (doneCount > 0 && doneCount < state.steps.length) {
-        shared.hidden = false;
-        shared.innerHTML = "";
+      var total = state.steps.length;
+      shared.hidden = false;
+      shared.innerHTML = "";
+      if (total > 0 && doneCount >= total) {
+        shared.appendChild(window.h("span", { text:
+          "Someone has already played this week through to the end, and you are seeing where "
+          + "they left it. It is one shared scenario, so everyone sees the same week. " }));
+        shared.appendChild(window.h("button", { class: "btn primary", type: "button",
+          onclick: reset }, ["Start it again from the beginning"]));
+      } else if (doneCount > 0) {
         shared.appendChild(window.h("span", { text:
           "Someone has already played " + doneCount + " of these steps. This demo is one shared "
           + "scenario, so everyone sees the same week. " }));
@@ -93,7 +106,8 @@
       }
     }
 
-    var detail = nextUndone ? nextUndone.detail : "The week is played out. Press Reset to run it again.";
+    var detail = nextUndone ? nextUndone.detail
+      : "Played out. Use the button above to start it again from the beginning.";
     document.getElementById("step-detail").textContent = detail;
   }
 
