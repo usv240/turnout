@@ -182,10 +182,16 @@
     host.innerHTML = "";
     var gaps = state.gaps.filter(function (g) { return g.status !== "thin"; });
     if (!gaps.length) {
+      // Same distinction the status line makes. An empty board after the coverage pass means every
+      // window holds. An empty board before it means nothing has been looked at, and saying no
+      // window is short a crew would be reporting an absence of data as a finding.
+      var scored = state.steps.some(function (s) { return s.id === "watch" && s.done; });
       host.appendChild(window.h("div", { class: "card" }, [
-        window.h("h3", { text: "Nothing needs you" }),
-        window.h("p", { class: "muted", style: "margin:0",
-          text: "No window in the next seven days is short a crew. Press the first step above to play the week." })
+        window.h("h3", { text: scored ? "Nothing needs you" : "Not scored yet" }),
+        window.h("p", { class: "muted", style: "margin:0", text: scored
+          ? "No window in the next seven days is short a crew."
+          : "The coverage pass has not run, so no window has been looked at yet. Press the first "
+            + "step above to play the week." })
       ]));
       return;
     }
