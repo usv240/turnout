@@ -1,0 +1,117 @@
+{
+  "generated": "2026-09-09T22:43:19.856257+00:00",
+  "n": 500,
+  "counts": {
+    "unknown": 490,
+    "no": 5,
+    "yes": 3,
+    "partial": 2
+  },
+  "deferred": 490,
+  "read": [
+    {
+      "text": "No calls..messages..missed calls",
+      "intent": "no",
+      "bare": false
+    },
+    {
+      "text": "Yup next stop.",
+      "intent": "yes",
+      "bare": false
+    },
+    {
+      "text": "Dear good morning now only i am up",
+      "intent": "partial",
+      "bare": false
+    },
+    {
+      "text": "Tomarrow final hearing on my laptop case so i cant.",
+      "intent": "no",
+      "bare": false
+    },
+    {
+      "text": "Kallis wont bat in 2nd innings.",
+      "intent": "no",
+      "bare": false
+    },
+    {
+      "text": "Yup",
+      "intent": "yes",
+      "bare": true
+    },
+    {
+      "text": "Ok..",
+      "intent": "yes",
+      "bare": true
+    },
+    {
+      "text": "No calls..messages..missed calls",
+      "intent": "no",
+      "bare": false
+    },
+    {
+      "text": "Nah can't help you there, I've never had an iphone",
+      "intent": "no",
+      "bare": false
+    },
+    {
+      "text": "Morning only i can ok.",
+      "intent": "partial",
+      "bare": false
+    }
+  ],
+  "bare": [
+    {
+      "text": "Yup",
+      "intent": "yes",
+      "bare": true
+    },
+    {
+      "text": "Ok..",
+      "intent": "yes",
+      "bare": true
+    }
+  ],
+  "not_bare": [
+    {
+      "text": "No calls..messages..missed calls",
+      "intent": "no",
+      "bare": false
+    },
+    {
+      "text": "Yup next stop.",
+      "intent": "yes",
+      "bare": false
+    },
+    {
+      "text": "Dear good morning now only i am up",
+      "intent": "partial",
+      "bare": false
+    },
+    {
+      "text": "Tomarrow final hearing on my laptop case so i cant.",
+      "intent": "no",
+      "bare": false
+    },
+    {
+      "text": "Kallis wont bat in 2nd innings.",
+      "intent": "no",
+      "bare": false
+    },
+    {
+      "text": "No calls..messages..missed calls",
+      "intent": "no",
+      "bare": false
+    },
+    {
+      "text": "Nah can't help you there, I've never had an iphone",
+      "intent": "no",
+      "bare": false
+    },
+    {
+      "text": "Morning only i can ok.",
+      "intent": "partial",
+      "bare": false
+    }
+  ]
+}

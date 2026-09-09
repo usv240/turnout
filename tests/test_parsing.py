@@ -37,3 +37,40 @@ def test_unknown():
 def test_decision_choice():
     assert parse_reply("2a").decision_choice == "2a"
     assert parse_reply("undo").decision_choice == "undo"
+
+
+# The two defects the UCI SMS corpus found. Both were substring matches over arbitrary text, and
+# both put somebody on the board who was not coming, which is the one error this system exists to
+# prevent. See evals/wild_eval.py.
+
+def test_a_long_message_goes_to_the_model_rather_than_being_guessed_at():
+    """The longest genuine reply in this whole file is four words."""
+    from turnout.parsing import MAX_RULE_WORDS
+
+    long_one = ("Your gonna have to pick up a $1 burger for yourself on your way home. "
+                "I can't even move. Pain is killing me.")
+    assert len(long_one.split()) > MAX_RULE_WORDS
+    assert parse_reply(long_one).intent == "unknown"
+
+    spam = ("SIX chances to win CASH! From 100 to 20,000 pounds txt> CSH11 and send to 87575. "
+            "Cost 150p/day, 6days, 16+ TsandCs apply")
+    assert parse_reply(spam).intent == "unknown"
+
+
+def test_the_time_words_match_whole_words_only():
+    """'Goodmorning sleeping ga.' is a real message and it used to read as available until noon."""
+    assert parse_reply("Goodmorning sleeping ga.").intent == "unknown"
+    assert parse_reply("morning only").intent == "partial"      # still reads
+    assert parse_reply("afternoon").intent == "partial"
+
+
+def test_i_can_does_not_match_i_cannot():
+    assert parse_reply("i can").intent == "yes"
+    assert parse_reply("i can't").intent == "no"
+    assert parse_reply("i cant").intent == "no"
+    assert parse_reply("i cannot").intent == "no"
+
+
+def test_away_matches_a_whole_word():
+    assert parse_reply("away").intent == "no"
+    assert parse_reply("always").intent != "no"

@@ -19,6 +19,12 @@ NO = {"n", "no", "nope", "nah", "can't", "cant", "cannot", "out", "not available
 _TIME = re.compile(r"(\d{1,2})(?::(\d{2}))?\s*(am|pm|a|p)?", re.I)
 
 
+# A genuine reply to a yes or no question is short. Above this, the rule heuristics stop being
+# reading and start being guessing, so the message goes to the model instead. See the guard in
+# parse_reply and evals/wild_eval.py for the measurement that set it.
+MAX_RULE_WORDS = 10
+
+
 def _hour(m: re.Match) -> int | None:
     h = int(m.group(1))
     mer = (m.group(3) or "").lower()
@@ -55,15 +61,31 @@ def parse_reply(text: str) -> ParsedReply:
     if re.fullmatch(r"[123]|2[ab]", t):
         return ParsedReply(intent="decision", decision_choice=t)
 
+    # Everything below here is a heuristic over the message body, and a heuristic over a long
+    # message is a guess. A reply to "Reply Y or N, or a time like till 2" is short: the longest in
+    # the entire test suite is four words.
+    #
+    # Measured against the first 500 messages of the UCI SMS Spam Collection, matching these
+    # patterns anywhere in a long message misread 35 of them. "Goodmorning sleeping ga." read as
+    # partial availability. "Your gonna have to pick up a $1 burger" read as yes. A member wrongly
+    # read as available is a person on the board who is not coming, which is the one error this
+    # system exists to prevent, so anything longer than a short reply goes to the model rather than
+    # being guessed at here.
+    if len(t.split()) > MAX_RULE_WORDS:
+        return ParsedReply(intent="unknown", confidence=0.0, note=raw)
+
     # partial windows: "till 2", "until noon", "morning only", "after 1", "from 1"
-    if "noon" in t:
+    #
+    # Whole words, not substrings. "Goodmorning sleeping ga." is a real message from the SMS corpus
+    # and it contains "morning", which used to read as available until noon.
+    if re.search(r"\bnoon\b", t):
         if any(k in t for k in ("till", "til", "until", "before", "to ")):
             return ParsedReply(intent="partial", window_end_hour=12, confidence=0.95, note=raw)
         if "after" in t or "from" in t:
             return ParsedReply(intent="partial", window_start_hour=12, confidence=0.95, note=raw)
-    if "morning" in t:
+    if re.search(r"\bmorning\b", t):
         return ParsedReply(intent="partial", window_end_hour=12, confidence=0.9, note=raw)
-    if "afternoon" in t:
+    if re.search(r"\bafternoon\b", t):
         return ParsedReply(intent="partial", window_start_hour=12, confidence=0.9, note=raw)
     m = re.search(r"(?:till|until|til|before|to)\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm|a|p)?)\b", t)
     if m:
@@ -81,10 +103,14 @@ def parse_reply(text: str) -> ParsedReply:
         return ParsedReply(intent="yes")
     if t in NO or (words and words[0] in NO and len(words) <= 4):
         return ParsedReply(intent="no")
-    if any(p in t for p in ("not this week", "out of town", "on vacation", "away")):
+    if (any(p in t for p in ("not this week", "out of town", "on vacation"))
+            or re.search(r"\baway\b", t)):
         return ParsedReply(intent="no", confidence=0.85, note=raw)
-    if any(p in t for p in ("i can", "count me", "put me")):
+    # The word boundary rejects "cant" and "cannot"; the lookahead rejects "can't".
+    # Without it, "I can't even move. Pain is killing me." read as yes, because it contains
+    # "i can".
+    if re.search(r"\bi can\b(?!')", t) or any(p in t for p in ("count me", "put me")):
         return ParsedReply(intent="yes", confidence=0.85, note=raw)
-    if any(p in t for p in ("can't", "cant", "won't", "wont", "unable")):
+    if any(p in t for p in ("can't", "cant", "cannot", "won't", "wont", "unable")):
         return ParsedReply(intent="no", confidence=0.8, note=raw)
     return ParsedReply(intent="unknown", confidence=0.0, note=raw)

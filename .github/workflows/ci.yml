@@ -34,6 +34,12 @@ jobs:
       - name: Named baseline, against the obvious alternative
         # A headline claim on docs/EVAL.md, so it is rerun rather than asserted.
         run: python -m evals.baseline_eval
+      - name: The parser against a corpus we did not write
+        # 500 real messages from the UCI SMS Spam Collection. Downloads the corpus, so it needs
+        # network; it calls no model, so the figure cannot drift with a model version.
+        run: |
+          python -m evals.wild_eval --fetch
+          python -m evals.wild_eval
 
   accessibility:
     runs-on: ubuntu-latest

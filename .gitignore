@@ -13,3 +13,7 @@ cdk.out/
 .DS_Store
 *.log
 data/runs/
+
+# The UCI SMS Spam Collection, downloaded by evals/wild_eval.py --fetch.
+# Somebody else's dataset, so it is fetched rather than vendored.
+data/wild/sms_corpus.json
