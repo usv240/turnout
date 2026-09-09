@@ -5,7 +5,12 @@ invites a certain kind of dishonesty, where you reach for every module in the SD
 long. This is the list, including the parts deliberately left alone and why, because a feature used
 without a reason is worse evidence of understanding than a feature rejected with one.
 
-Strands Agents SDK 1.18.0. Every row was checked against the installed package, not the docs.
+Strands Agents SDK 1.55.1, which is what a fresh `pip install -e ".[dev]"` resolves today.
+Every row was checked against the installed package rather than the documentation.
+
+An earlier version of this file said 1.18.0 and listed twelve surfaces. That was wrong. It was
+written against a second interpreter on the same machine holding an older Strands, and 1.5x has
+modules 1.18 did not. The corrected list is below, including the ones that omission hid.
 
 | Surface | Used | Where, or why not |
 |---|---|---|
@@ -21,6 +26,11 @@ Strands Agents SDK 1.18.0. Every row was checked against the installed package, 
 | `strands.interrupt` | no | See below |
 | `strands.tools.mcp` | no | See below |
 | `strands.experimental` | no | Explicitly unstable. Not in something a chief's staffing depends on |
+| `strands.interventions` | no | See below. Newer than the hooks this already uses |
+| `strands.sandbox` | no | Code execution goes to AgentCore Code Interpreter, which is the deployed sandbox |
+| `strands.memory` | no | Recall is AgentCore Memory, provisioned per department and live |
+| `strands.storage` | no | Gaps, ledger and messages are in the store, where they can be queried and shown |
+| `strands.plugins`, `strands.injection` | no | Nothing here needs to extend the orchestrator or rewrite context |
 
 ## Hooks, and why policy is not in the prompt
 
@@ -55,7 +65,7 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318   send spans to a collector
 TURNOUT_TRACE_CONSOLE=1                             print spans, no collector needed
 ```
 
-## The three that were rejected, and the reason for each
+## The ones that were rejected, and the reason for each
 
 **`strands.tools.mcp`.** Turnout already has a cross-organisation boundary, and it is A2A, which is
 the right protocol for it. MCP is how an agent reaches tools. A2A is how an agent reaches another
@@ -84,3 +94,19 @@ never. Holding an agent run open across that would be strictly worse.
 
 The escalation being asynchronous is the design, not a limitation of it. Using `Interrupt` here
 would have added an SDK import and removed a property the product depends on.
+
+**`strands.interventions`.** This one is here because the version mistake above hid it, and it
+deserves a straight answer rather than a quiet omission. It is a first-class control primitive added
+after 1.18: `Deny` blocks a tool call and shows the model the reason, `Confirm` asks a human to
+approve one, `Guide` steers without blocking.
+
+`Deny` is a cleaner expression of exactly what `ContactPolicyHook` does today by setting
+`cancel_tool` in a `BeforeToolCallEvent`. If this project were starting now, that is the surface to
+build the contact policy on.
+
+It is not being rewritten five days from a deadline. That hook is the single piece of code standing
+between a volunteer who replied STOP and a text message, it is covered by tests, and swapping the
+mechanism underneath it buys a better-looking import and risks the one promise the product makes.
+`Confirm` does not change the chief analysis either: it is documented as supported only on
+`beforeToolCall`, so it waits in process, which is the same reason `Interrupt` does not fit.
+
