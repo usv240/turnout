@@ -1,0 +1,165 @@
+{
+  "generated": "2026-09-09T19:32:57.252672+00:00",
+  "cases": [
+    {
+      "area": "Mutual aid identity",
+      "name": "unsigned request",
+      "kind": "adversarial",
+      "expect": "refused: no signature",
+      "passed": true,
+      "got": "unsigned: no mutual aid signature on the request"
+    },
+    {
+      "area": "Mutual aid identity",
+      "name": "request signed by another department",
+      "kind": "adversarial",
+      "expect": "refused: signer is not the sender",
+      "passed": true,
+      "got": "signed by cedar but the request says it came from millbrook"
+    },
+    {
+      "area": "Mutual aid identity",
+      "name": "request widened after signing",
+      "kind": "adversarial",
+      "expect": "refused: contents do not match the signature",
+      "passed": true,
+      "got": "signature does not match the contents of the request from millbrook"
+    },
+    {
+      "area": "Mutual aid identity",
+      "name": "malformed signature",
+      "kind": "adversarial",
+      "expect": "refused: signature is not readable",
+      "passed": true,
+      "got": "malformed signature: not-a-signature"
+    },
+    {
+      "area": "Mutual aid identity",
+      "name": "request naming a department with no agreement on file",
+      "kind": "adversarial",
+      "expect": "refused: no mutual aid agreement",
+      "passed": true,
+      "got": "no mutual aid agreement on file with stranger"
+    },
+    {
+      "area": "Mutual aid identity",
+      "name": "correctly signed request from a real peer",
+      "kind": "legitimate",
+      "expect": "accepted",
+      "passed": true,
+      "got": "verified as millbrook"
+    },
+    {
+      "area": "Contact policy",
+      "name": "text to a member who sent STOP",
+      "kind": "adversarial",
+      "expect": "refused: opted out",
+      "passed": true,
+      "got": "Dana Ortiz opted out (STOP). Policy: never text an opted-out member."
+    },
+    {
+      "area": "Contact policy",
+      "name": "ask beyond the weekly limit",
+      "kind": "adversarial",
+      "expect": "refused: at the weekly ask limit",
+      "passed": true,
+      "got": "Luis Reyes has already been asked 2 times this week (limit 2). Policy: pick someone else or move on."
+    },
+    {
+      "area": "Contact policy",
+      "name": "text to a member id that does not exist",
+      "kind": "adversarial",
+      "expect": "refused: unknown member",
+      "passed": true,
+      "got": "unknown member id"
+    },
+    {
+      "area": "Contact policy",
+      "name": "ask a member inside their limits",
+      "kind": "legitimate",
+      "expect": "allowed",
+      "passed": true,
+      "got": "allowed"
+    },
+    {
+      "area": "Contact policy",
+      "name": "tell a capped member the window is covered",
+      "kind": "legitimate",
+      "expect": "allowed: the cap is on asking, not on informing",
+      "passed": true,
+      "got": "allowed"
+    },
+    {
+      "area": "Quiet hours",
+      "name": "ask sent at 22:30, inside quiet hours",
+      "kind": "adversarial",
+      "expect": "held until quiet hours end, not sent",
+      "passed": true,
+      "got": "held until 2026-09-10T07:00:00"
+    },
+    {
+      "area": "Quiet hours",
+      "name": "ask sent at 10:00, outside quiet hours",
+      "kind": "legitimate",
+      "expect": "sent immediately",
+      "passed": true,
+      "got": "sent"
+    },
+    {
+      "area": "Scoring endpoint",
+      "name": "role that does not exist",
+      "kind": "adversarial",
+      "expect": "refused, and says which roles it knows",
+      "passed": true,
+      "got": "HTTP 400 'astronaut' is not a valid Role"
+    },
+    {
+      "area": "Scoring endpoint",
+      "name": "probability above one",
+      "kind": "adversarial",
+      "expect": "refused: responds must be between 0 and 1",
+      "passed": true,
+      "got": "HTTP 400 person 0: responds must be between 0 and 1"
+    },
+    {
+      "area": "Scoring endpoint",
+      "name": "nobody available at all",
+      "kind": "adversarial",
+      "expect": "refused: available must be a non-empty list",
+      "passed": true,
+      "got": "HTTP 400 available must be a non-empty list of people who could respond"
+    },
+    {
+      "area": "Scoring endpoint",
+      "name": "more people than it will score",
+      "kind": "adversarial",
+      "expect": "refused: too many people in one request",
+      "passed": true,
+      "got": "HTTP 400 that is more people than this endpoint will score in one go"
+    },
+    {
+      "area": "Scoring endpoint",
+      "name": "a valid window with three people",
+      "kind": "legitimate",
+      "expect": "scored",
+      "passed": true,
+      "got": "HTTP 200"
+    },
+    {
+      "area": "Chief's attention",
+      "name": "4 decisions on one day, budget 3",
+      "kind": "adversarial",
+      "expect": "at most 3 sent, the rest deferred",
+      "passed": true,
+      "got": "3 sent, 1 deferred"
+    },
+    {
+      "area": "Chief's attention",
+      "name": "the most urgent decision of the day",
+      "kind": "legitimate",
+      "expect": "sent, not deferred",
+      "passed": true,
+      "got": "3 sent"
+    }
+  ]
+}

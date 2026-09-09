@@ -26,6 +26,14 @@ jobs:
         # workflow does not have. They are marked `aws` and deselected here rather than made to pass
         # against a fake. The other 127 are deterministic and run on every push.
         run: pytest -q -m "not aws"
+      - name: Refusal eval, and that the published number is still true
+        # docs/EVAL.md leads with a count of what the system refuses and what it must not refuse.
+        # Running it here is what makes that a measurement rather than an assertion: if a refusal
+        # breaks, or the page drifts from the eval, the build fails.
+        run: python -m evals.refusal_eval
+      - name: Named baseline, against the obvious alternative
+        # A headline claim on docs/EVAL.md, so it is rerun rather than asserted.
+        run: python -m evals.baseline_eval
 
   accessibility:
     runs-on: ubuntu-latest

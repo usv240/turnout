@@ -1,6 +1,14 @@
 # Turnout
 
-**Every other tool tells the chief who is coming. Turnout makes sure someone is.**
+**Polls fourteen volunteers by text, scores every uncovered hour against the department's own call
+history, negotiates with the neighbouring departments' agents over the Agent-to-Agent protocol, and
+interrupts the chief once.**
+
+Every other tool tells the chief who is coming. Turnout makes sure someone is.
+
+**Measured:** 14 of 14 adversarial cases refused, and 0 of 6 legitimate ones wrongly refused. 82
+reply phrasings read at 100 percent with no model call. Both in [docs/EVAL.md](docs/EVAL.md), both
+rerun in CI on every push, because a published number nobody reruns is an assertion.
 
 A background agent for volunteer fire and EMS departments. It finds the hours when nobody can
 respond, fills them by asking the right people and the right neighbours, and interrupts the chief
@@ -111,7 +119,7 @@ Model ids are configuration, never hard-coded. See `src/turnout/config.py`; over
 ## Tests
 
 ```bash
-pytest -q          # 157 tests
+pytest -q          # 161 tests
 ```
 
 The suite includes real A2A over HTTP between separate servers, including a test that asks a peer
@@ -263,10 +271,16 @@ story plays every time; the live weather tool calls the public National Weather 
   by a scale constant of 3.0, chosen so that roughly half of one expected unanswered time-critical
   call scores as critical. That constant is a modelling choice, documented at the top of
   `engine/risk.py`, not something derived from data.
-- **NERIS submission is mocked.** The real system needs department credentials. The draft, the
-  uncertainty flagging and the review step are real; the submit call records the payload.
-- **SMS is simulated in the demo** so the same story plays every time. The AWS End User Messaging
-  path is implemented in `channels/sms.py` behind the same interface.
+- **It drafts a NERIS report and then stops.** Submitting one needs credentials issued to a named
+  officer at a specific department, and that is exactly the point where a person should be reading
+  what is about to enter a federal incident record. The draft, the uncertainty flagging and the
+  chief's review are real and measured; the submit call records the payload it would have sent. The
+  stopping is the product, not a gap in it.
+- **Messages run against a simulated carrier, so the demo plays the same way every time.** Both
+  channels sit behind one interface in `channels/sms.py` and the AWS End User Messaging path is the
+  same code below it. Either way a message passes the same policy hooks, the same quiet hours logic
+  and the same 160 character segment check, which is what the test suite and the refusal eval
+  actually measure. What is simulated is the carrier, not the decision to send.
 
 ## Licence
 
