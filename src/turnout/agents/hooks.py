@@ -3,8 +3,10 @@
 ContactPolicyHook: a member who opted out is never texted; targeted asks stop at the weekly limit.
 The prompt also says so, but the hook is what makes it true.
 
-TraceHook: emits a trace event for every tool call with its input and output, so the Trace Viewer
-and AgentCore Observability show the same story.
+TraceHook: emits a trace event for every tool call with its input and output, which is what the
+Trace Viewer renders. That format is ours and it stops at the edge of this process, so the same
+run is also traced with OpenTelemetry when an endpoint is configured. See turnout/observability.py:
+those spans are what AgentCore Observability and CloudWatch ingest.
 """
 
 from __future__ import annotations

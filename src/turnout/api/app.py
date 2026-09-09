@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from turnout import observability
 from turnout.api.service import service
 
 SANDBOX_KEY = os.environ.get("TURNOUT_SANDBOX_KEY", "turnout-sandbox-2026")
@@ -34,6 +35,9 @@ app = FastAPI(
     ),
 )
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# Off unless an OTLP endpoint is configured. See turnout/observability.py for why.
+observability.setup()
 
 
 def normalize_phone(phone: str | None) -> str | None:
@@ -64,7 +68,8 @@ def health() -> dict:
     """Liveness for the status page. Returns the simulated clock so a stuck demo is obvious."""
     s = service.state()
     return {"ok": True, "now": s["now"], "headline": s["headline"],
-            "gaps": len(s["gaps"]), "steps_done": sum(1 for x in s["steps"] if x["done"])}
+            "gaps": len(s["gaps"]), "steps_done": sum(1 for x in s["steps"] if x["done"]),
+            "tracing": observability.status()}
 
 
 @app.get("/api/state", tags=["read"])

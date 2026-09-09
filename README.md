@@ -78,6 +78,13 @@ department publishes an AgentCard and answers coverage questions about itself, a
 | Signed requests across that boundary | `a2a/identity.py`, checked in the peer tools | Riverton commits an apparatus and a ledger debt on the strength of a request. It has to be able to tell that Millbrook sent it. |
 | Structured output (Pydantic) | Reply parsing, NERIS drafts, offers | Downstream code never parses prose. |
 | Agents as tools | Scribe, Cert Clock | Self-contained jobs with clear inputs and outputs. |
+| `strands.telemetry` | `observability.py` | Our trace format stops at the edge of this process. OTLP spans do not, and AgentCore Observability ingests them directly. |
+
+Three surfaces were deliberately left alone: `strands.session`, `strands.interrupt` and
+`strands.tools.mcp`. [docs/STRANDS_SURFACES.md](docs/STRANDS_SURFACES.md) is the full inventory with
+the reason for each. The short version of the interesting one: `Interrupt` pauses an in-process run
+and resumes it with an answer, and this agent escalates to a chief who may be asleep, so the run
+ends and the reply is applied hours later. Asynchronous escalation is the design, not a gap in it.
 
 ### AgentCore services, and why
 
@@ -91,7 +98,7 @@ names where its numbers were computed, so this is checkable rather than a claim.
 | Runtime | designed | One isolated runtime per department. The web tier is App Runner today. |
 | Gateway | designed | Roster, SMS, weather and NERIS as tools, with credentials out of agent code. |
 | Identity | designed | Scoped credentials to act for a department, and to prove identity to a peer. |
-| Observability | designed | The Trace tab reads the agents' own event stream today. |
+| Observability | **code path live, no collector attached** | The Trace tab reads the agents' own event stream. `observability.py` also exports OpenTelemetry spans, which is what AgentCore Observability ingests, off unless `OTEL_EXPORTER_OTLP_ENDPOINT` is set. `/api/health` reports which state it is in, so the page cannot claim tracing that is not running. |
 
 ## Run it
 
