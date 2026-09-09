@@ -130,7 +130,7 @@
   <text class="s" x="615" y="586">Runtime: one isolated runtime per department</text>
   <text class="s" x="615" y="606">Gateway: roster, SMS, weather, NERIS as tools</text>
   <text class="s" x="615" y="626">Identity: act for a department, prove it to a peer</text>
-  <text class="s" x="235" y="626">Observability: the Trace tab reads the event stream</text>
+  <text class="s" x="235" y="626">Observability: OTLP spans wired, no collector attached</text>
 
   <path class="thin" d="M430 480 L430 510" marker-end="url(#arrow2)"/>
   <path class="thin" d="M835 375 L835 510" marker-end="url(#arrow2)"/>
