@@ -33,7 +33,10 @@ packages = ["src/turnout"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+# "." puts the repository root on the path so `evals` imports under a bare `pytest`.
+# CI runs `pytest`; a local `python -m pytest` adds the working directory itself, which
+# is why this was green locally and red on every push.
+pythonpath = ["src", "."]
 asyncio_mode = "auto"
 
 [tool.ruff]
