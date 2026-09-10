@@ -17,3 +17,7 @@ data/runs/
 # The UCI SMS Spam Collection, downloaded by evals/wild_eval.py --fetch.
 # Somebody else's dataset, so it is fetched rather than vendored.
 data/wild/sms_corpus.json
+
+# The recording script. A working document for making the video, not something a
+# judge needs, so it stays on disk and out of the repository.
+docs/DEMO_SCRIPT.md

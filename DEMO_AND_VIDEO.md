@@ -92,15 +92,6 @@ shows the agent doing its own job first and only escalating what it genuinely ca
 
 ## 4. Video script, target 4:15, hard cap 4:30
 
-> **Record from [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md), not from this section.**
->
-> This one was written while the system was being built and carries more detail than a judge can
-> absorb at speed. The shooting script in docs/ is shorter, puts the product on screen inside the first
-> minute, and says where to point and what to press at each beat. This section stays because it is
-> the record of what the system actually does, which is what the shooting script was checked
-> against.
-
-
 Recorded from the deployed system. Captions burned in. No talking head.
 
 | Time | Visual | Voiceover |
