@@ -49,8 +49,30 @@
     }
   }
 
+  // Set when a control inside the step row is pressed, consumed by the next renderSteps.
+  //
+  // Checking document.activeElement inside renderSteps is too late: setBusy disables the pressed
+  // button before the rebuild, and disabling the focused element sends focus to the body right
+  // then. By the time the row is rebuilt there is nothing left to detect. So the intent is
+  // recorded at the moment of the press instead.
+  var returnFocusToSteps = false;
+
+  function restoreStepFocus(host) {
+    if (!returnFocusToSteps) return;
+    returnFocusToSteps = false;
+    var next = host.querySelector("button:not([disabled])");
+    if (next) next.focus();
+  }
+
   function renderSteps() {
     var host = document.getElementById("steps");
+    // Pressing a step disables the button that was pressed and then rebuilds this whole row, and
+    // either of those on its own sends focus to the body. A keyboard or screen reader user was
+    // therefore returned to the top of the document after every step, and had to tab past the
+    // skip link, the brand, the clock, three theme buttons and a back link to reach the next one.
+    // If focus was in here when the rebuild started, it is put back on whatever is now pressable.
+    // Covers the case where focus is still here, such as a render with nothing disabled.
+    if (host.contains(document.activeElement)) returnFocusToSteps = true;
     host.innerHTML = "";
     var nextUndone = state.steps.filter(function (s) { return !s.done; })[0];
     state.steps.forEach(function (s) {
@@ -62,8 +84,12 @@
         class: "btn" + (isNext ? " primary" : ""),
         type: "button",
         title: s.done ? "Already played" : (isNext ? s.detail : "Play the steps before this first"),
+        // A disabled button's title is never announced and never rendered. The reason belongs in
+        // the accessible name, which a screen reader reads even when the control is disabled.
+        "aria-label": s.done ? s.title + ", already played"
+          : (isNext ? null : s.title + ", not yet. Play the steps before this one first."),
         disabled: s.done || busy || !isNext ? "" : null,
-        onclick: function () { runStep(s.id, s.detail); }
+        onclick: function () { returnFocusToSteps = true; runStep(s.id, s.detail); }
       }, [s.done ? "Done: " + s.title : s.title]);
       if (s.done || busy || !isNext) b.disabled = true;
       host.appendChild(b);
@@ -106,9 +132,17 @@
       }
     }
 
-    var detail = nextUndone ? nextUndone.detail
+    // The reason the later buttons are dim used to live only in a title attribute, which a
+    // disabled control never shows and a touch or keyboard user never gets at all. It is said
+    // here instead, in the caption that is already on the page.
+    var detail = nextUndone
+      ? nextUndone.detail + " " + "Steps run in order, so the rest stay dim until this one has run."
       : "Played out. Use the button above to start it again from the beginning.";
     document.getElementById("step-detail").textContent = detail;
+    // Rebuilding the row above destroyed whatever was focused. Put focus back on something
+    // pressable, but only if it was in here to begin with, so a render triggered by anything
+    // else does not steal it.
+    restoreStepFocus(host);
   }
 
   function riskDetails(g) {
@@ -488,13 +522,23 @@
   function connection(message, kind, actionLabel, action) {
     if (connEl) { connEl.remove(); connEl = null; }
     if (!message) return;
+    // The region goes into the document empty and is filled on the next frame. A live region
+    // that is already populated when it is inserted is not reliably announced by NVDA, JAWS or
+    // VoiceOver: they watch for a change inside a region they are already tracking. Building it
+    // fully and then appending meant the offline banner, which is the moment announcement matters
+    // most, was usually silent.
     connEl = window.h("div", { class: "conn" + (kind === "gone" ? " gone" : ""),
-      role: "status", "aria-live": "polite" }, [window.h("span", { text: message })]);
-    if (actionLabel) {
-      connEl.appendChild(window.h("button", { class: "btn small", type: "button",
-        onclick: function () { connection(null); action(); } }, [actionLabel]));
-    }
+      role: "status", "aria-live": "polite" }, []);
     document.body.appendChild(connEl);
+    var el = connEl;
+    requestAnimationFrame(function () {
+      if (el !== connEl) return;
+      el.appendChild(window.h("span", { text: message }));
+      if (actionLabel) {
+        el.appendChild(window.h("button", { class: "btn small", type: "button",
+          onclick: function () { connection(null); action(); } }, [actionLabel]));
+      }
+    });
   }
   window.addEventListener("offline", function () {
     connection("You are offline. Nothing is lost; the demo picks up where it left off.", "gone");
@@ -506,12 +550,25 @@
 
   function fail(e) {
     setBusy(false);
+    // setBusy(false) enables every step button, which is right during a normal run and wrong
+    // here: the ordering rules in renderSteps are what stop a week being played out of sequence,
+    // and a failure must not be the way around them. Re-render so a failed step leaves the board
+    // exactly as locked as it was before. Guarded because this same handler catches the very
+    // first /api/state call, when there is no state to render yet.
+    if (state) renderAll();
     var offline = !navigator.onLine;
+    var loading = !state;
     var el = document.getElementById("status");
     el.className = "status-line needs_you";
-    el.textContent = offline
-      ? "You are offline, so that step did not run. Nothing was lost."
-      : "That step did not finish: " + e.message + ". Nothing was saved.";
+    if (offline) {
+      el.textContent = loading
+        ? "You are offline, so the week could not be loaded. Nothing was lost."
+        : "You are offline, so that step did not run. Nothing was lost.";
+    } else {
+      el.textContent = loading
+        ? "The week could not be loaded: " + e.message + "."
+        : "That step did not finish: " + e.message + ". Nothing was saved.";
+    }
     connection(offline ? "You are offline." : "The service did not answer.",
       "gone", "Try again", function () { location.reload(); });
   }
@@ -579,7 +636,7 @@
     }).then(function () {
       setBusy(false);
       renderAll();
-    });
+    }).catch(fail);
   }
 
   function reset() {
@@ -592,7 +649,7 @@
     }).then(function () {
       setBusy(false);
       renderAll();
-    });
+    }).catch(fail);
   }
 
   /* Tabs ----------------------------------------------------------------- */

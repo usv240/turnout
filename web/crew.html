@@ -5,6 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Turnout: what the agent asks of you</title>
 <meta name="description" content="The accountability side of a scheduling agent. Everything Turnout knows about each volunteer, every message it has sent them, and the limits it cannot talk its way around.">
+<!-- Link preview. A shared URL with no card is the first impression wasted. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Turnout">
+<meta property="og:title" content="Turnout: what the agent asks of you">
+<meta property="og:description" content="The accountability side of a scheduling agent. Everything Turnout knows about each volunteer, every message it has sent them, and the limits it cannot talk its way around.">
+<meta property="og:url" content="https://zjrrw6wpxj.us-east-1.awsapprunner.com/crew.html">
+<meta property="og:image" content="https://zjrrw6wpxj.us-east-1.awsapprunner.com/social.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Turnout, built with the Strands Agents SDK on Amazon Bedrock">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Turnout: what the agent asks of you">
+<meta name="twitter:description" content="The accountability side of a scheduling agent. Everything Turnout knows about each volunteer, every message it has sent them, and the limits it cannot talk its way around.">
+<meta name="twitter:image" content="https://zjrrw6wpxj.us-east-1.awsapprunner.com/social.png">
+
 <script>
   (function () {
     try {
@@ -96,7 +111,10 @@
     published range for volunteer first responders. It is why the agent asks two specific people
     rather than texting all fourteen.
     <button class="info" data-tip="p_understaffed" data-label="the response probability"></button></p>
-    <div class="crew" id="crew"></div>
+    <!-- Announced, because this is written asynchronously: a reader who cannot see the page
+       has no other way to learn the answer arrived, or that it failed. Polite, so it waits
+       for a pause rather than cutting in. -->
+    <div class="crew" id="crew" role="status" aria-live="polite"></div>
   </section>
 
   <section class="card" style="margin-top:var(--s6)" aria-labelledby="api-h">
@@ -132,6 +150,17 @@
     weekday_night: "Weekday, night", weekend_day: "Weekend, daytime",
     weekend_evening: "Weekend, evening", weekend_night: "Weekend, night"
   };
+
+  // The rest of the site writes dates as words. A certificate expiry was the one place a raw
+  // ISO string reached a product screen. Falls back to the original if it will not parse, because
+  // a wrong date is worse than an ugly one.
+  function longDate(iso) {
+    var d = new Date(iso + "T00:00:00");
+    if (isNaN(d.getTime())) return iso;
+    var months = ["January", "February", "March", "April", "May", "June", "July", "August",
+      "September", "October", "November", "December"];
+    return months[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear();
+  }
 
   function hour(n) {
     var suffix = n < 12 ? "am" : "pm";
@@ -208,9 +237,14 @@
     ]);
 
     var tags = h("ul", { class: "tags" });
-    m.roles.forEach(function (r) { tags.appendChild(h("li", { text: r })); });
+    // Role ids come off the API as driver_operator. Every other render site in the project
+    // turns those into words; this one printed the underscore, on the page the judges table
+    // points at for the accountability story.
+    m.roles.forEach(function (r) {
+      tags.appendChild(h("li", { text: String(r).replace(/_/g, " ") }));
+    });
     m.certs.forEach(function (c) {
-      tags.appendChild(h("li", { text: c.type + ", expires " + c.expires }));
+      tags.appendChild(h("li", { text: c.type + ", expires " + longDate(c.expires) }));
     });
     tags.appendChild(h("li", { text: "quiet " + hour(m.quiet_hours[0]) + " to "
       + hour(m.quiet_hours[1]) }));

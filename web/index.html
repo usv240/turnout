@@ -5,6 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Turnout: make sure someone is coming</title>
 <meta name="description" content="A background agent for volunteer fire and EMS departments. It finds the hours when nobody can respond, fills them by asking the right people and the right neighbours, and interrupts the chief only for the one decision that needs a human.">
+<!-- Link preview. A shared URL with no card is the first impression wasted. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Turnout">
+<meta property="og:title" content="Turnout: make sure someone is coming">
+<meta property="og:description" content="A background agent for volunteer fire and EMS departments. It finds the hours when nobody can respond, fills them by asking the right people and the right neighbours, and interrupts the chief only for the one decision that needs a human.">
+<meta property="og:url" content="https://zjrrw6wpxj.us-east-1.awsapprunner.com/">
+<meta property="og:image" content="https://zjrrw6wpxj.us-east-1.awsapprunner.com/social.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Turnout, built with the Strands Agents SDK on Amazon Bedrock">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Turnout: make sure someone is coming">
+<meta name="twitter:description" content="A background agent for volunteer fire and EMS departments. It finds the hours when nobody can respond, fills them by asking the right people and the right neighbours, and interrupts the chief only for the one decision that needs a human.">
+<meta name="twitter:image" content="https://zjrrw6wpxj.us-east-1.awsapprunner.com/social.png">
+
 <script>
   /* Set the theme before first paint so there is no flash of the wrong one. */
   (function () {
@@ -263,7 +278,7 @@
     </div>
 
     <div class="card">
-      <img src="architecture.svg" alt="Architecture diagram. Inside Millbrook, a Strands Graph runs Watch, then Closer, then Neighbor, then Chief Gate, with Scribe and Cert Clock as separate jobs and hooks enforcing quiet hours and ask limits in code. Neighbor talks over the Agent-to-Agent protocol to Riverton and Cedar Hollow, which run the same agent code in their own processes with their own data and their own AgentCards, answering a coverage question and never the roster. Two AgentCore services are live: Code Interpreter runs every risk score and Memory holds who says yes to which window. Runtime, Gateway and Identity are designed in rather than running. The web tier is AWS App Runner." style="width:100%;height:auto">
+      <img src="architecture.svg" data-dark-src="architecture-dark.svg" alt="Architecture diagram. Inside Millbrook, a Strands Graph runs Watch, then Closer, then Neighbor, then Chief Gate, with Scribe and Cert Clock as separate jobs and hooks enforcing quiet hours and ask limits in code. Neighbor talks over the Agent-to-Agent protocol to Riverton and Cedar Hollow, which run the same agent code in their own processes with their own data and their own AgentCards, answering a coverage question and never the roster. Two AgentCore services are live: Code Interpreter runs every risk score and Memory holds who says yes to which window. Runtime, Gateway and Identity are designed in rather than running. The web tier is AWS App Runner." style="width:100%;height:auto">
     </div>
 
     <h3 style="margin-top:var(--s5)">Amazon Bedrock AgentCore</h3>
@@ -319,15 +334,17 @@
           </tr>
           <tr>
             <td><strong>Presentation</strong></td>
-            <td>A four minute video recorded from this deployment, opening on an empty apparatus bay
-            and ending on one text message and a truck rolling from the next town.</td>
-            <td><a href="#demo">Demo</a></td>
+            <td>The demo below is the same week the submission video walks through, and you can
+            play it yourself rather than watch someone else press the buttons. It opens on an empty
+            apparatus bay and ends on one text message and a truck rolling from the next town. The
+            video itself is linked from the Devpost submission.</td>
+            <td><a href="#demo">Play the week</a></td>
           </tr>
         </tbody>
       </table>
     </div>
     <p class="small muted">
-      Licence: MIT, in the repository root and visible in the About panel. All code was written during
+      Licence: MIT, in the repository root and shown in the About panel of the GitHub repository. All code was written during
       the submission period. The only external service is the public National Weather Service alerts
       API; everything else is AWS.
     </p>

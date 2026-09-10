@@ -5,6 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Turnout: set up a department</title>
 <meta name="description" content="Set up a volunteer fire or EMS department in under three minutes. Paste whatever roster you already have.">
+<!-- Link preview. A shared URL with no card is the first impression wasted. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Turnout">
+<meta property="og:title" content="Turnout: set up a department">
+<meta property="og:description" content="Set up a volunteer fire or EMS department in under three minutes. Paste whatever roster you already have.">
+<meta property="og:url" content="https://zjrrw6wpxj.us-east-1.awsapprunner.com/start.html">
+<meta property="og:image" content="https://zjrrw6wpxj.us-east-1.awsapprunner.com/social.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Turnout, built with the Strands Agents SDK on Amazon Bedrock">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Turnout: set up a department">
+<meta name="twitter:description" content="Set up a volunteer fire or EMS department in under three minutes. Paste whatever roster you already have.">
+<meta name="twitter:image" content="https://zjrrw6wpxj.us-east-1.awsapprunner.com/social.png">
+
 <script>
   (function () {
     try {
@@ -88,7 +103,10 @@ Tom Bright ff +1 555 555 6666"></textarea>
       <button class="btn primary" id="read" type="button">Read my roster</button>
       <button class="btn" id="sample" type="button">Use a sample roster</button>
     </div>
-    <div id="parse-out"></div>
+    <!-- Announced, because this is written asynchronously: a reader who cannot see the page
+       has no other way to learn the answer arrived, or that it failed. Polite, so it waits
+       for a pause rather than cutting in. -->
+    <div id="parse-out" role="status" aria-live="polite"></div>
   </section>
 
   <!-- Step 2 -->
@@ -174,7 +192,12 @@ Cedar Hollow Volunteer Fire Department"></textarea>
     if (id === "step2" || id === "step3" || id === "done") document.getElementById("s1").classList.add("done");
     if (id === "step3" || id === "done") document.getElementById("s2").classList.add("done");
     if (id === "done") document.getElementById("s3").classList.add("done");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // styles.css neutralises every declarative transition under prefers-reduced-motion,
+    // and it cannot reach a scroll animation asked for in JavaScript. This is the only
+    // one on the site, so it asks the same question itself.
+    var calm = window.matchMedia
+      && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: 0, behavior: calm ? "auto" : "smooth" });
   }
 
   document.getElementById("sample").addEventListener("click", function () {

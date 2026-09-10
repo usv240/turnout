@@ -5,6 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Turnout: score your own window</title>
 <meta name="description" content="Point the risk engine at your own department. Say who is actually available on a given afternoon and see whether that window is dangerous, with every number behind the answer.">
+<!-- Link preview. A shared URL with no card is the first impression wasted. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Turnout">
+<meta property="og:title" content="Turnout: score your own window">
+<meta property="og:description" content="Point the risk engine at your own department. Say who is actually available on a given afternoon and see whether that window is dangerous, with every number behind the answer.">
+<meta property="og:url" content="https://zjrrw6wpxj.us-east-1.awsapprunner.com/try.html">
+<meta property="og:image" content="https://zjrrw6wpxj.us-east-1.awsapprunner.com/social.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Turnout, built with the Strands Agents SDK on Amazon Bedrock">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Turnout: score your own window">
+<meta name="twitter:description" content="Point the risk engine at your own department. Say who is actually available on a given afternoon and see whether that window is dangerous, with every number behind the answer.">
+<meta name="twitter:image" content="https://zjrrw6wpxj.us-east-1.awsapprunner.com/social.png">
+
 <script>
   (function () {
     try {
@@ -142,7 +157,10 @@
     </div>
   </section>
 
-  <div id="out"></div>
+  <!-- Announced, because this is written asynchronously: a reader who cannot see the page
+       has no other way to learn the answer arrived, or that it failed. Polite, so it waits
+       for a pause rather than cutting in. -->
+    <div id="out" role="status" aria-live="polite"></div>
 
   <section class="card stack" style="margin-top:var(--s6)">
     <h2 style="font-size:1.125rem">Or call it from your own code</h2>

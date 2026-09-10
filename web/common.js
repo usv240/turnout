@@ -4,6 +4,33 @@
 (function () {
   "use strict";
 
+
+  /* Themed images ------------------------------------------------------
+     An SVG loaded through an img tag is a separate document: the page's CSS variables and the
+     data-theme attribute do not reach inside it, so a diagram drawn on a near-white ground stayed
+     near-white on a dark page. A prefers-color-scheme block inside the file would not fix it
+     either, because this site deliberately defaults to light whatever the operating system says,
+     so a dark laptop reading a light page would have got a dark diagram. The theme the reader
+     actually chose is the one this script knows, so the swap happens here.
+
+     Any img with data-dark-src follows the theme. Without the attribute nothing changes. */
+  function syncThemedImages() {
+    var attr = document.documentElement.getAttribute("data-theme");
+    var dark = attr === "dark" || (!attr
+      && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.querySelectorAll("img[data-dark-src]").forEach(function (img) {
+      if (!img.dataset.lightSrc) img.dataset.lightSrc = img.getAttribute("src");
+      var want = dark ? img.dataset.darkSrc : img.dataset.lightSrc;
+      if (img.getAttribute("src") !== want) img.setAttribute("src", want);
+    });
+  }
+  if (window.matchMedia) {
+    try {
+      window.matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", syncThemedImages);
+    } catch (e) { /* older browsers, the explicit toggle still works */ }
+  }
+
   /* Theme -------------------------------------------------------------- */
   var KEY = "turnout-theme";
   function stored() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
@@ -14,6 +41,7 @@
     document.querySelectorAll(".theme-toggle button").forEach(function (b) {
       b.setAttribute("aria-pressed", String(b.dataset.mode === mode));
     });
+    syncThemedImages();
   }
   // Light is the default. A person who has their laptop in dark mode should still meet the
   // product in the theme it was drawn in, unless they choose otherwise here.
