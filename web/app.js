@@ -405,6 +405,23 @@
   }
 
   var TRACE_WORDS = {
+    // Anything not named here renders as its raw snake_case key. Fourteen kinds were doing that,
+    // including every tool call, the AgentCore Memory writes, and the hook refusing to contact a
+    // member. The Agent trace is a surface a judge reads, so it should read like words.
+    availability: "Availability recorded",
+    chief_reply: "Chief replied",
+    coverage_computed: "Coverage computed",
+    neris_submitted: "Incident report submitted",
+    partly_approved: "Partly approved, some windows still open",
+    policy_block: "Blocked by contact policy",
+    polls_sent: "Roll call sent",
+    response_remembered: "Response remembered",
+    roll_call_llm: "Reply read by the model",
+    roll_call_llm_error: "Model could not read the reply",
+    roll_call_low_confidence: "Reply unclear, sent to the model",
+    tool_call: "Tool call",
+    tool_result: "Tool result",
+    training_proposed: "Training proposed",
     poll_sent: "Roll call text sent",
     sms_out: "Text sent",
     sms_in: "Text received",
