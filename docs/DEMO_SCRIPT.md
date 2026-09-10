@@ -1,12 +1,14 @@
 # Turnout: demo video script
 
-**Target 3:17. About 445 spoken words, at a comfortable 135 a minute.** The rules cap the video at five minutes.
+**Target 3:35. About 484 spoken words, at a comfortable 135 a minute.** The rules cap the video at five minutes.
 
 Record from the deployed URL, clean browser profile, 1920 by 1080, light theme. **Press Reset before every take.**
 
 Each beat below gives three things: what to point at, what to do next, and the line to say. **Read only the quoted line out loud.** Everything else is a direction to you.
 
 If a take runs long, cut a sentence rather than reading faster. The recording notes at the bottom say which one to drop first.
+
+The timecodes run slightly ahead of the words alone, on purpose. The gap is the room for the interface to answer and for the deliberate silences, which are marked where they matter.
 
 ---
 
@@ -140,7 +142,17 @@ If a take runs long, cut a sentence rather than reading faster. The recording no
 
 > And volunteers are not invisible inputs. They can see what Turnout knows, how often it asks them, and when it deliberately left them alone.
 
-## 3:06  What changed
+## 3:06  Try it yourself
+
+**Point at:** Navigate to /try.html, Score your own window. Then /start.html for a moment.
+
+**Then:** Type a window, press the button, let a real score come back. Do not narrate the form.
+
+**Say:**
+
+> And none of this is a canned demo. Score your own window with your own numbers, paste your own roster to set up a department, or call the same API with the public sandbox key on the landing page.
+
+## 3:24  What changed
 
 **Point at:** Back to the board, all green.
 
@@ -150,7 +162,7 @@ If a take runs long, cut a sentence rather than reading faster. The recording no
 
 > The chief did not spend her morning chasing fourteen people. Turnout found the risk, closed what it could, negotiated what it could not, and asked her once.
 
-## 3:18  Close
+## 3:36  Close
 
 **Point at:** Hold on the green board.
 
@@ -172,7 +184,7 @@ If a take runs long, cut a sentence rather than reading faster. The recording no
 
 ## Before you upload
 
-- Export between 3:15 and 4:00.
+- Export between 3:30 and 4:15.
 - Upload to YouTube as **public**, then open it in a logged-out window and confirm it plays.
 - Captions in `video/` are timed to an earlier, longer script. Regenerate them from the final cut.
 - The recorded visual tracks are from 5 September, before the interface fixes. Record fresh rather than narrating over them, or the video will not match the site a judge opens.
@@ -190,4 +202,5 @@ Rules.md scores five equally weighted criteria, and says judges may judge on the
 | 2:22 | The hackathon's own theme. Autonomous work, one human decision |
 | 2:42 | Creativity. An agent that declines to guess |
 | 2:55 | Design. A complete product, including the person it asks things of |
-| 3:06 | Presentation. The change stated once, plainly, before the tagline |
+| 3:06 | Technical Implementation. Proof it is a live system, and an invitation to test it |
+| 3:24 | Presentation. The change stated once, plainly, before the tagline |
