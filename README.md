@@ -62,25 +62,26 @@ all at two on a Tuesday. Turnout scores the probability, not the headcount.
 ```mermaid
 %%{init: {'theme': 'neutral'}}%%
 flowchart TB
-  VOL["14 volunteers<br/>plain SMS"] <--> API
-  CHIEF["Chief<br/>plain SMS"] <--> API
-  API["Turnout web and API<br/>AWS App Runner"]
-  API --> ROLL["Roll Call<br/>sends the morning poll,<br/>parses every reply"]
-  API --> WATCH
-  API --> SCRIBE["Scribe<br/>drafts the NERIS report<br/>after the call"]
-  ROLL -->|"every answer, as it arrives"| MEM["AgentCore Memory<br/>one per department"]
+  PEOPLE["14 volunteers and the chief<br/>plain text messages, no app to install"] <--> APP
+  APP["Turnout, on AWS App Runner"]
+  APP --> STEP1
+  APP --> SCRIBE["After the call:<br/>draft the incident report"]
+  APP -->|"every reply is remembered"| MEM["AgentCore Memory"]
 
-  subgraph DEPT["Millbrook's coverage agent: one Strands Graph, Claude on Amazon Bedrock"]
+  subgraph AGENT["The department's agent: a Strands Graph on Amazon Bedrock"]
     direction TB
-    WATCH["Watch<br/>score every gap"] -->|"gap found"| CLOSER["Closer<br/>ask our own people"]
-    CLOSER -->|"still short"| NEIGHBOR["Neighbor<br/>ask the next town"]
-    NEIGHBOR --> GATE["Chief Gate<br/>one text, batched"]
-    CLOSER -->|"decision needed"| GATE
+    STEP1["1. Find the hours when nobody<br/>can answer a call"]
+    STEP2["2. Ask our own people first"]
+    STEP3["3. Ask the next town"]
+    STEP4["4. Text the chief, once"]
+    STEP1 -->|"found a gap"| STEP2
+    STEP2 -->|"still short"| STEP3
+    STEP3 --> STEP4
+    STEP2 -->|"nothing left to try"| STEP4
   end
 
-  WATCH --> CODE["AgentCore Code Interpreter<br/>every risk score"]
-  CLOSER --> CODE
-  NEIGHBOR <-->|"A2A, HMAC signed"| PEERS["Riverton's agent<br/>Cedar Hollow's agent<br/>separate processes"]
+  STEP1 --> CODE["AgentCore Code Interpreter<br/>works out the risk"]
+  STEP3 <-->|"agent to agent, signed"| PEER["The next town's own agent<br/>a separate process"]
 ```
 
 Two boundaries, two protocols. **Inside** a department the work is a Strands `Graph` with conditional
