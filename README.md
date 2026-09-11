@@ -64,24 +64,22 @@ all at two on a Tuesday. Turnout scores the probability, not the headcount.
 flowchart TB
   VOL["14 volunteers<br/>plain SMS"] <--> API
   CHIEF["Chief<br/>plain SMS"] <--> API
-  API["Turnout web and API<br/>AWS App Runner"] --> WATCH
+  API["Turnout web and API<br/>AWS App Runner"]
+  API --> ROLL["Roll Call<br/>sends the morning poll,<br/>parses every reply"]
+  API --> WATCH
+  API --> JOBS["Scribe and Cert Clock<br/>separate scheduled agents"]
+  ROLL -->|"every answer, as it arrives"| MEM["AgentCore Memory<br/>one per department"]
 
-  subgraph DEPT["Millbrook's agent: one Strands Graph"]
+  subgraph DEPT["Millbrook's coverage agent: one Strands Graph, Claude on Amazon Bedrock"]
     direction TB
-    WATCH["Watch<br/>score every gap"]
-    CLOSER["Closer<br/>ask our own people"]
-    NEIGHBOR["Neighbor<br/>ask the next town"]
-    GATE["Chief Gate<br/>one text, batched"]
-    WATCH -->|"gap found"| CLOSER
-    CLOSER -->|"still short"| NEIGHBOR
-    NEIGHBOR --> GATE
+    WATCH["Watch<br/>score every gap"] -->|"gap found"| CLOSER["Closer<br/>ask our own people"]
+    CLOSER -->|"still short"| NEIGHBOR["Neighbor<br/>ask the next town"]
+    NEIGHBOR --> GATE["Chief Gate<br/>one text, batched"]
     CLOSER -->|"decision needed"| GATE
   end
 
+  WATCH -->|"every risk score"| CODE["AgentCore Code Interpreter"]
   NEIGHBOR <-->|"A2A, HMAC signed"| PEERS["Riverton's agent<br/>Cedar Hollow's agent<br/>separate processes"]
-  WATCH --> CODE["AgentCore Code Interpreter<br/>every risk score"]
-  CLOSER --> MEM["AgentCore Memory<br/>who answers, and when"]
-  DEPT --> BEDROCK["Amazon Bedrock<br/>every agent in the graph<br/>Claude Sonnet 4.6 and Haiku 4.5"]
 ```
 
 Two boundaries, two protocols. **Inside** a department the work is a Strands `Graph` with conditional
