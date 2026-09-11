@@ -317,7 +317,7 @@ Pages:
 
 | Route | Purpose |
 |---|---|
-| `/` | Landing page (see `LANDING_PAGE.md`) |
+| `/` | Landing page |
 | `/demo` | Judge mode entry: picks Millbrook, loads the demo scenario, offers "Play the week" |
 | `/board` | Station Board: 7-day coverage heatmap by district, gap list with risk badges (formula on hover), pending decisions, recent incidents, cert warnings |
 | `/network` | Network View: map with the three departments, live A2A messages animating along edges, ledger balances |

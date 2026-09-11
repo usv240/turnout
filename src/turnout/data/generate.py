@@ -2,7 +2,7 @@
 
 Deterministic (seeded). Run: python -m turnout.data.generate --out data/scenarios/demo_week.json
 
-Design of the demo week (see DEMO_AND_VIDEO.md):
+Design of the demo week:
 - Clock starts Wednesday 2026-09-09 06:30 (the day before the headline gap).
 - Ice storm warning Thursday 2026-09-10 06:00 to 14:00.
 - Millbrook Thursday 10:00-14:00 north: one firefighter available, no driver. Critical.
