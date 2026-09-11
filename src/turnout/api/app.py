@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from turnout import observability
+from turnout import keys, observability
 from turnout.api.service import service
 
 SANDBOX_KEY = os.environ.get("TURNOUT_SANDBOX_KEY", "turnout-sandbox-2026")
@@ -54,13 +54,40 @@ def normalize_phone(phone: str | None) -> str | None:
 
 
 def check_key(x_api_key: str | None) -> None:
-    """The sandbox key is public and printed on the developers page. It exists to show the shape of
-    a real deployment, where each department has its own key, not to keep anyone out."""
-    if x_api_key and x_api_key != SANDBOX_KEY:
-        raise HTTPException(status_code=401, detail={
-            "error": "unknown api key",
-            "hint": f"the public sandbox key is {SANDBOX_KEY}, or omit the header entirely in judge mode",
-        })
+    """Accept a key this deployment minted, or the standing sandbox key, or no key at all.
+
+    Omitting the header still works, deliberately: a judge should not have to authenticate to read
+    a demo. What a key adds is that the path is real. A minted key is signed rather than stored, so
+    one that was not issued here fails, and the failure says which of those things went wrong.
+    """
+    if not x_api_key or x_api_key == SANDBOX_KEY:
+        return
+    if keys.valid(x_api_key):
+        return
+    raise HTTPException(status_code=401, detail={
+        "error": "unknown api key",
+        "reason": keys.why_invalid(x_api_key),
+        "hint": "generate one at POST /api/keys, use the standing key "
+                f"{SANDBOX_KEY}, or omit the header entirely",
+    })
+
+
+@app.post("/api/keys", tags=["ops"])
+def new_key() -> dict:
+    """Issue a sandbox API key. Anyone may call this, and that is the point.
+
+    The key is signed, not stored, and it expires in a day. It proves nothing about who is calling,
+    because this is a sandbox over synthetic data that anybody can reset. It exists so the
+    authentication path is something you can exercise rather than something this page claims.
+    """
+    issued = keys.mint()
+    return {
+        **issued,
+        "header": "x-api-key",
+        "try_it": "curl -H \"x-api-key: <key>\" <host>/api/gaps",
+        "note": "Sandbox key. Anyone can mint one, it expires in a day, and the data behind it is "
+                "synthetic.",
+    }
 
 
 @app.get("/api/health", tags=["ops"])

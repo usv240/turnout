@@ -403,3 +403,35 @@ table.plain td a { display: inline-block; padding: 5px 0; }
 
 /* A scrollable region takes keyboard focus (see common.js), so it needs a visible focus ring. */
 pre.formula:focus-visible, .scroll-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* The API section: a key you can mint, and the endpoints answering live ------------------
+   Everything below styles evidence rather than decoration, so it takes its colours from the
+   same tokens as the rest of the page and reads in both themes. */
+.keyout { margin-top: var(--s4); }
+.keyline {
+  display: block; font-family: var(--mono); font-size: .9375rem;
+  padding: var(--s3) var(--s4); border-radius: var(--r-sm);
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text); overflow-wrap: anywhere; user-select: all;
+}
+.keyout p { margin: var(--s3) 0 0; }
+
+.runout { margin-top: var(--s4); overflow-x: auto; }
+.runs { width: 100%; border-collapse: collapse; font-size: .875rem; }
+.runs th, .runs td {
+  text-align: left; padding: var(--s2) var(--s3);
+  border-bottom: 1px solid var(--border); vertical-align: top;
+}
+.runs th { font-size: .8125rem; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+.runs td { font-variant-numeric: tabular-nums; }
+.runs code { font-family: var(--mono); font-size: .8125rem; white-space: nowrap; }
+/* Status is carried by a word and a colour, never colour alone. */
+.runs tr.ok td:nth-child(2) { color: var(--success); font-weight: 600; }
+.runs tr.bad td:nth-child(2) { color: var(--danger); font-weight: 600; }
+.runs .peek {
+  font-family: var(--mono); font-size: .75rem; color: var(--text-muted);
+  max-width: 42ch; overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+  .runs .peek { display: none; }
+}
