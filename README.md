@@ -67,7 +67,7 @@ flowchart TB
   API["Turnout web and API<br/>AWS App Runner"]
   API --> ROLL["Roll Call<br/>sends the morning poll,<br/>parses every reply"]
   API --> WATCH
-  API --> JOBS["Scribe and Cert Clock<br/>separate scheduled agents"]
+  API --> SCRIBE["Scribe<br/>drafts the NERIS report<br/>after the call"]
   ROLL -->|"every answer, as it arrives"| MEM["AgentCore Memory<br/>one per department"]
 
   subgraph DEPT["Millbrook's coverage agent: one Strands Graph, Claude on Amazon Bedrock"]
@@ -78,7 +78,8 @@ flowchart TB
     CLOSER -->|"decision needed"| GATE
   end
 
-  WATCH -->|"every risk score"| CODE["AgentCore Code Interpreter"]
+  WATCH --> CODE["AgentCore Code Interpreter<br/>every risk score"]
+  CLOSER --> CODE
   NEIGHBOR <-->|"A2A, HMAC signed"| PEERS["Riverton's agent<br/>Cedar Hollow's agent<br/>separate processes"]
 ```
 
@@ -86,7 +87,8 @@ Two boundaries, two protocols. **Inside** a department the work is a Strands `Gr
 edges, because a safety workflow has to be deterministic and auditable, and each edge reads the shared
 store rather than the previous node's prose. **Between** departments it is **A2A**, because
 departments are separate organisations: each publishes an AgentCard and answers coverage questions
-about itself, and nothing else. Scribe and Cert Clock run as separate scheduled agents.
+about itself, and nothing else. Scribe and Cert Clock sit outside the graph as separate agents. The deployed demo runs Scribe
+after the call; Cert Clock runs from the simulator, `python -m turnout.sim.runner`.
 
 The risk score itself is not a model output. It is plain Python in `engine/kernel.py`, with the model
 deciding what to do about the number rather than producing it.
