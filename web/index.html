@@ -278,7 +278,7 @@
     </div>
 
     <div class="card">
-      <img src="architecture.svg" data-dark-src="architecture-dark.svg" alt="Architecture diagram. Inside Millbrook, a Strands Graph runs Watch, then Closer, then Neighbor, then Chief Gate, with Scribe and Cert Clock as separate jobs and hooks enforcing quiet hours and ask limits in code. Neighbor talks over the Agent-to-Agent protocol to Riverton and Cedar Hollow, which run the same agent code in their own processes with their own data and their own AgentCards, answering a coverage question and never the roster. Two AgentCore services are live: Code Interpreter runs every risk score and Memory holds who says yes to which window. Runtime, Gateway and Identity are designed in rather than running. The web tier is AWS App Runner." style="width:100%;height:auto">
+      <img src="architecture.svg" data-dark-src="architecture-dark.svg" alt="Architecture diagram. Inside Millbrook, a Strands Graph runs Watch, then Closer, then Neighbor, then Chief Gate, with Scribe and Cert Clock as separate jobs and hooks enforcing quiet hours and ask limits in code. Neighbor talks over the Agent-to-Agent protocol to Riverton and Cedar Hollow, which run the same agent code in their own processes with their own data and their own AgentCards, answering a coverage question and never the roster. Two AgentCore services are live: Code Interpreter runs every risk score and Memory holds who says yes to which window. Runtime, Gateway and Identity are designed in rather than running, and the OpenTelemetry export that Observability ingests is wired but has no collector attached. The web tier is AWS App Runner." style="width:100%;height:auto">
     </div>
 
     <h3 style="margin-top:var(--s5)">Amazon Bedrock AgentCore</h3>
@@ -288,7 +288,7 @@
       <div class="card"><h3>Gateway, designed<button class="info" data-tip="agentcore_gateway" data-label="AgentCore Gateway"></button></h3><p class="muted small">Roster, texting, weather and NERIS as tools, with credentials out of agent code.</p></div>
       <div class="card"><h3>Identity, designed<button class="info" data-tip="agentcore_identity" data-label="AgentCore Identity"></button></h3><p class="muted small">Scoped credentials to act for a department, and to prove who you are to a neighbour.</p></div>
       <div class="card"><h3>Runtime, designed<button class="info" data-tip="agentcore_runtime" data-label="AgentCore Runtime"></button></h3><p class="muted small">One isolated runtime per department. The web tier runs on App Runner today.</p></div>
-      <div class="card"><h3>Observability, designed<button class="info" data-tip="agentcore_observability" data-label="AgentCore Observability"></button></h3><p class="muted small">The Trace tab reads the agents' own event stream today.</p></div>
+      <div class="card"><h3>Observability, wired<button class="info" data-tip="agentcore_observability" data-label="AgentCore Observability"></button></h3><p class="muted small">The Trace tab reads the agents' own event stream. Strands also exports OpenTelemetry spans, which is what AgentCore Observability ingests, off unless a collector is configured.</p></div>
       <div class="card"><h3>Hooks<button class="info" data-tip="hooks" data-label="Strands hooks"></button></h3><p class="muted small">Quiet hours and the weekly ask limit are enforced in code, not by a prompt.</p></div>
       <div class="card"><h3>A2A<button class="info" data-tip="a2a" data-label="the A2A protocol"></button></h3><p class="muted small">The open standard that lets one department's agent ask another's for help.</p></div>
     </div>
@@ -361,15 +361,6 @@
 
     <div class="grid cols-2">
       <div class="card">
-        <h3>Run it</h3>
-        <pre class="formula">git clone &lt;repo&gt; &amp;&amp; cd turnout
-uv venv &amp;&amp; uv pip install -e ".[dev]"
-python -m turnout.data.generate
-uvicorn turnout.api.app:app --port 8000</pre>
-        <p class="muted small">Then open http://localhost:8000. The agents call Amazon Bedrock, so
-        AWS credentials with Bedrock access are needed.</p>
-      </div>
-      <div class="card">
         <h3>Call it</h3>
         <pre class="formula">curl -H "x-api-key: YOUR_KEY" \
   https://&lt;host&gt;/api/gaps
@@ -379,6 +370,15 @@ curl -X POST https://&lt;host&gt;/api/reply \
   -d '{"phone":"+15551234567","body":"Y"}'</pre>
         <p class="muted small">Use the key from the button above in place of YOUR_KEY, or leave the header off entirely. Full schema at <a href="/docs">/docs</a> and
         <a href="/api/openapi.json">/api/openapi.json</a>.</p>
+      </div>
+      <div class="card">
+        <h3>Or run the whole thing yourself</h3>
+        <pre class="formula">git clone &lt;repo&gt; &amp;&amp; cd turnout
+uv venv &amp;&amp; uv pip install -e ".[dev]"
+python -m turnout.data.generate
+uvicorn turnout.api.app:app --port 8000</pre>
+        <p class="muted small">Then open http://localhost:8000. The agents call Amazon Bedrock, so
+        AWS credentials with Bedrock access are needed.</p>
       </div>
     </div>
 
