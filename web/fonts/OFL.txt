@@ -1,0 +1,7 @@
+Inter and JetBrains Mono are licensed under the SIL Open Font License 1.1.
+Full text: https://openfontlicense.org
+
+Inter: https://github.com/rsms/inter
+JetBrains Mono: https://github.com/JetBrains/JetBrainsMono
+
+Only the latin subset is redistributed here. Regenerate with tools/fetch_fonts.py.

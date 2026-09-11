@@ -435,3 +435,62 @@ pre.formula:focus-visible, .scroll-x:focus-visible { outline: 2px solid var(--ac
 @media (max-width: 640px) {
   .runs .peek { display: none; }
 }
+
+/* Optical refinements, now that the typefaces actually load ------------------------------
+   The scale, the weights and the tracking here were all chosen for Inter, and until the faces
+   were shipped every one of them was being applied to a system fallback with different metrics.
+   With the real face in place a few things want adjusting, and a few become possible.
+
+   Nothing below changes a colour, a size or a spacing token. It is the layer above those: how
+   type sits, where lines break, and how a control answers when you touch it. */
+
+/* Inter is drawn tight and wants more negative tracking as it gets larger. At display sizes the
+   previous -.01em left the headline looking spaced out; this is closer to how the face is meant
+   to set. */
+h1 { letter-spacing: -.028em; }
+h2 { letter-spacing: -.022em; }
+h3 { letter-spacing: -.015em; }
+
+/* A headline that leaves one word alone on the last line reads as an accident. balance evens the
+   lines; pretty stops a paragraph ending on a single short word. Both degrade to nothing in a
+   browser that does not have them. */
+h1, h2, h3, h4, .status-line, .stat-label { text-wrap: balance; }
+p, li, .lede, .section-lede { text-wrap: pretty; }
+
+/* Figures that sit above or beside each other have to line up, which proportional digits will not
+   do. This is the whole reason tabular numerals exist. */
+.stat, .runs td, .kv dd, .quota, .clock, .badge, table td, table th {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The credibility row wrapped as inline items, so the third fell to a second line and sat under
+   nothing in particular. A grid gives each claim its own column and a common baseline. */
+@media (min-width: 860px) {
+  .credibility {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: var(--s3) var(--s5);
+    align-items: start;
+  }
+}
+
+/* A control should answer when you touch it. Short enough not to feel laggy, long enough to read
+   as deliberate rather than as a flicker. The reduced-motion block later in this file nulls every
+   duration, so this costs nothing to anyone who has asked for stillness. */
+.btn, .theme-toggle button, [role="tab"], .info {
+  transition: background-color .14s ease, border-color .14s ease,
+              color .14s ease, transform .14s ease;
+}
+.btn:not(:disabled):active { transform: translateY(1px); }
+
+/* Two rings rather than one: the accent, and a gap in the page colour so the ring reads on a
+   button whose own fill is the accent. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--bg);
+}
+
+/* Hairlines look heavier than they are on a high density screen. Where a border is only there to
+   separate, let it be quieter than where a border is holding something in. */
+.credibility, .runs th, .runs td { border-color: color-mix(in srgb, var(--border) 70%, transparent); }
