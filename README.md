@@ -60,7 +60,8 @@ all at two on a Tuesday. Turnout scores the probability, not the headcount.
 ## How it is built
 
 ```mermaid
-flowchart LR
+%%{init: {'theme': 'neutral'}}%%
+flowchart TB
   VOL["14 volunteers<br/>plain SMS"] <--> API
   CHIEF["Chief<br/>plain SMS"] <--> API
   API["Turnout web and API<br/>AWS App Runner"] --> WATCH
@@ -80,7 +81,7 @@ flowchart LR
   NEIGHBOR <-->|"A2A, HMAC signed"| PEERS["Riverton's agent<br/>Cedar Hollow's agent<br/>separate processes"]
   WATCH --> CODE["AgentCore Code Interpreter<br/>every risk score"]
   CLOSER --> MEM["AgentCore Memory<br/>who answers, and when"]
-  GATE --> BEDROCK["Amazon Bedrock<br/>Claude Sonnet 4.6 and Haiku 4.5"]
+  DEPT --> BEDROCK["Amazon Bedrock<br/>every agent in the graph<br/>Claude Sonnet 4.6 and Haiku 4.5"]
 ```
 
 Two boundaries, two protocols. **Inside** a department the work is a Strands `Graph` with conditional
