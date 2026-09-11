@@ -271,7 +271,8 @@
     var chiefPhone = state.department.chief_phone;
 
     api("/api/messages?phone=" + encodeURIComponent(chiefPhone)).then(function (d) {
-      var body = window.h("div", { class: "phone-body" });
+      var body = window.h("div", { class: "phone-body", tabindex: "0", role: "log",
+        "aria-label": "Messages with the chief" });
       d.messages.forEach(function (m) { body.appendChild(bubble(m)); });
       if (!d.messages.length) body.appendChild(window.h("p", { class: "muted small", text: "No messages yet." }));
       var foot = window.h("div", { class: "phone-foot" });
@@ -293,7 +294,7 @@
     }
     var member = withMessages.filter(function (m) { return m.id === selectedMember; })[0];
     var select = window.h("select", {
-      style: "font:inherit;font-size:.875rem;padding:4px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--text)",
+      class: "phone-picker",
       "aria-label": "Choose a member",
       onchange: function (e) { selectedMember = e.target.value; renderPhones(); }
     });
@@ -303,7 +304,8 @@
     });
 
     api("/api/messages?phone=" + encodeURIComponent(member.phone)).then(function (d) {
-      var body = window.h("div", { class: "phone-body" });
+      var body = window.h("div", { class: "phone-body", tabindex: "0", role: "log",
+        "aria-label": "Messages with " + member.name });
       d.messages.forEach(function (m) { body.appendChild(bubble(m)); });
       if (!d.messages.length) {
         body.appendChild(window.h("p", { class: "muted small",

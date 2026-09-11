@@ -63,6 +63,44 @@ TARGET_JS = """
 """
 
 
+
+# The demo's state lives on the server and is shared, so playing it once makes every later page
+# load show the populated app. That matters more than it sounds: until this existed the audit only
+# ever saw empty screens, and the whole populated half of the product went unchecked. A question
+# card shipped with its answer buttons stretched to 46 by 120 because nothing here had ever
+# rendered one.
+STEPS = ["poll", "watch", "neighbors", "approve", "incident"]
+TABS = ["tab-board", "tab-phones", "tab-network", "tab-trace", "tab-incident"]
+
+
+def play(base: str) -> None:
+    """Drive the demo to the end through the API, so the audit sees a full screen."""
+    import urllib.error
+    import urllib.request
+
+    for step in STEPS:
+        req = urllib.request.Request(
+            base + "/api/step", method="POST",
+            data=json.dumps({"step": step}).encode(),
+            headers={"content-type": "application/json"})
+        try:
+            urllib.request.urlopen(req, timeout=240).read()
+        except urllib.error.HTTPError as e:
+            print(f"  (step {step} returned {e.code}, carrying on)")
+        except Exception as e:
+            print(f"  (step {step} failed: {e}, carrying on)")
+
+
+def reset(base: str) -> None:
+    import contextlib
+    import urllib.request
+
+    # Best effort. A demo left played is untidy, not a reason to fail a clean audit.
+    with contextlib.suppress(Exception):
+        urllib.request.urlopen(
+            urllib.request.Request(base + "/api/reset", method="POST"), timeout=60).read()
+
+
 def main() -> int:
     from playwright.sync_api import sync_playwright
 
@@ -71,18 +109,30 @@ def main() -> int:
     ap.add_argument("--theme-key", default="turnout-theme")
     ap.add_argument("--pages", default=",".join(PAGES))
     ap.add_argument("--json", default="")
+    ap.add_argument("--play", action="store_true",
+                    help="play the demo first, then audit the populated app "
+                         "and every tab in it")
     args = ap.parse_args()
 
     pages = args.pages.split(",")
     failures: list[str] = []
     checked = 0
 
+    if args.play:
+        print("  playing the demo so the audit sees a populated app")
+        play(args.base)
+
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
         for path in pages:
-            for theme in THEMES:
+            # Each tab holds different markup, and only one of them is rendered at a time, so a
+            # single pass over the page audits a fifth of it. With --play the rest is reachable.
+            views = ([(path, tab) for tab in TABS]
+                     if args.play and path == "/app.html" else [(path, None)])
+            for path_, tab in views:
+              for theme in THEMES:
                 for width, height in WIDTHS:
-                    label = f"{path} {theme} {width}px"
+                    label = f"{path_}{'#' + tab if tab else ''} {theme} {width}px"
                     ctx = browser.new_context(viewport={"width": width, "height": height})
                     page = ctx.new_page()
                     errors: list[str] = []
@@ -91,8 +141,14 @@ def main() -> int:
                             s.append(m.text) if m.type == "error" else None)
                     page.add_init_script(
                         f"localStorage.setItem({args.theme_key!r}, {theme!r})")
-                    page.goto(args.base + path, wait_until="networkidle")
+                    page.goto(args.base + path_, wait_until="networkidle")
                     page.wait_for_timeout(400)
+                    if tab:
+                        try:
+                            page.click("#" + tab)
+                            page.wait_for_timeout(700)
+                        except Exception as e:
+                            failures.append(f"{label}: could not open the tab, {e}")
                     checked += 1
 
                     page.add_script_tag(url=AXE)
@@ -109,7 +165,7 @@ def main() -> int:
                         failures.append(
                             f"{label}: page scrolls sideways, {scroll_w} wide in {client_w}")
 
-                    minimum = 44 if path in MARKETING else 48
+                    minimum = 44 if path_ in MARKETING else 48
                     for t in page.evaluate(TARGET_JS, minimum):
                         need = t["min"]
                         failures.append(
@@ -120,6 +176,10 @@ def main() -> int:
                         failures.append(f"{label}: console {e[:120]}")
                     ctx.close()
         browser.close()
+
+    if args.play:
+        reset(args.base)
+        print("  demo reset, so the next visitor gets a fresh one")
 
     print(f"checked {checked} page renders across {len(pages)} pages, "
           f"{len(THEMES)} themes and {len(WIDTHS)} widths")

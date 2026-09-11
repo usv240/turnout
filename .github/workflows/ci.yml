@@ -65,4 +65,9 @@ jobs:
       - name: axe-core, layout and target sizes
         # Every page, both themes, three widths. Fails the build on any WCAG 2.2 AA violation,
         # any sideways scroll, any undersized target, or any console error.
-        run: python tools/a11y_audit.py --base http://127.0.0.1:8000
+        run: |
+          python tools/a11y_audit.py --base http://127.0.0.1:8000
+          # Again with the demo played, so the audit sees a populated app and every
+          # tab in it. Four real defects lived in that half and none of them could
+          # be seen from an empty page.
+          python tools/a11y_audit.py --base http://127.0.0.1:8000 --play

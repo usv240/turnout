@@ -494,3 +494,24 @@ p, li, .lede, .section-lede { text-wrap: pretty; }
 /* Hairlines look heavier than they are on a high density screen. Where a border is only there to
    separate, let it be quieter than where a border is holding something in. */
 .credibility, .runs th, .runs td { border-color: color-mix(in srgb, var(--border) 70%, transparent); }
+
+/* The phones panel, after the audit learned to play the demo -----------------------------
+   Three real defects lived here since the panel was written, and none of them could be seen by
+   an audit that only ever loaded an empty page. */
+
+/* A scrollable list with nothing focusable inside cannot be scrolled from a keyboard at all.
+   tabindex makes it reachable; this gives the focus it now takes somewhere to show. */
+.phone-body:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* The member picker was styled inline with 4px of padding and came out 29px tall, against a rule
+   that every control in this app is at least 48. In the stylesheet it can also be themed. */
+.phone-picker {
+  font: inherit; font-size: .9375rem;
+  min-height: 48px; padding: var(--s2) var(--s3);
+  border-radius: var(--r-sm); border: 1px solid var(--border);
+  background: var(--surface); color: var(--text);
+  max-width: 100%;
+}
+
+/* Y and N are one character, so they came out 36 and 37 wide. A target is measured both ways. */
+.phone-foot .btn { min-width: 48px; }
