@@ -66,7 +66,7 @@ flowchart TB
   APP["Turnout, on AWS App Runner"]
   APP --> STEP1
   APP --> SCRIBE["After the call:<br/>draft the incident report"]
-  APP -->|"every reply is remembered"| MEM["AgentCore Memory"]
+  APP -->|"remembers who answers, and when"| MEM["AgentCore Memory"]
 
   subgraph AGENT["The department's agent: a Strands Graph on Amazon Bedrock"]
     direction TB
